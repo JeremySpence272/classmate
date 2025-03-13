@@ -14,12 +14,27 @@ const daysOfWeek = [
 // Generate hours from 8:00 to 20:00 (8am to 8pm)
 const hours = Array.from({ length: 13 }, (_, i) => i + 8);
 
+// Height of each hour cell in pixels (reduced from 64px)
+const HOUR_CELL_HEIGHT = 56;
+
 // Color mapping for different class types
 const typeColors = {
-  lecture: "bg-indigo-800",
-  lab: "bg-emerald-800",
-  seminar: "bg-amber-800",
-  discussion: "bg-rose-800",
+  lecture: {
+    bg: "bg-[#16b3d4]", // Soft teal
+    border: "border-[#0e7a8f]", // Darker teal
+  },
+  lab: {
+    bg: "bg-[#feca14]", // Soft yellow
+    border: "border-[#d9a800]", // Darker yellow
+  },
+  seminar: {
+    bg: "bg-[#ec745c]", // Soft coral
+    border: "border-[#c85240]", // Darker coral
+  },
+  discussion: {
+    bg: "bg-[#e85484]", // Soft pink
+    border: "border-[#c03a68]", // Darker pink
+  },
 };
 
 interface ClassCalendarProps {
@@ -46,15 +61,15 @@ const ClassCalendar: React.FC<ClassCalendarProps> = ({ classes }) => {
     const endInMinutes = endHour * 60 + endMinute;
     const durationInMinutes = endInMinutes - startInMinutes;
 
-    // Each hour block is 64px (h-16), so we calculate the height based on that
-    return `${(durationInMinutes / 60) * 64}px`;
+    // Each hour block is now HOUR_CELL_HEIGHT pixels
+    return `${(durationInMinutes / 60) * HOUR_CELL_HEIGHT}px`;
   };
 
   const calculateOffset = (startTime: string) => {
     const [hour, minute] = startTime.split(":").map(Number);
     // Calculate how far into the hour block we should start
     const offsetMinutes = minute;
-    return `${(offsetMinutes / 60) * 64}px`;
+    return `${(offsetMinutes / 60) * HOUR_CELL_HEIGHT}px`;
   };
 
   // Function to determine if a meeting belongs in a specific hour block
@@ -85,9 +100,13 @@ const ClassCalendar: React.FC<ClassCalendarProps> = ({ classes }) => {
     return meetingHour === hourValue;
   };
 
-  // Get the appropriate color for a class type
-  const getClassColor = (type: string) => {
-    return typeColors[type as keyof typeof typeColors] || "bg-indigo-800";
+  // Get the appropriate colors for a class type
+  const getClassColors = (type: string) => {
+    const colors = typeColors[type as keyof typeof typeColors] || {
+      bg: "bg-indigo-800",
+      border: "border-indigo-950",
+    };
+    return colors;
   };
 
   useEffect(() => {
@@ -135,7 +154,8 @@ const ClassCalendar: React.FC<ClassCalendarProps> = ({ classes }) => {
           {daysOfWeek.map((day) => (
             <div
               key={day + hour}
-              className="border-b border-r border-zinc-800 h-16 bg-transparent relative"
+              className="border-b border-r border-zinc-800 bg-transparent relative"
+              style={{ height: `${HOUR_CELL_HEIGHT}px` }}
             >
               {classMeetings.map((meeting, index) => {
                 if (isMeetingInHourBlock(meeting, day, hour)) {
@@ -144,18 +164,23 @@ const ClassCalendar: React.FC<ClassCalendarProps> = ({ classes }) => {
                     meeting.endTime
                   );
                   const topOffset = calculateOffset(meeting.startTime);
-                  const colorClass = getClassColor(meeting.type);
+                  const colors = getClassColors(meeting.type);
 
                   return (
                     <div
                       key={index}
-                      className={`absolute inset-x-0 ${colorClass} text-center text-zinc-50 overflow-hidden`}
+                      className={`absolute inset-x-0 rounded-t-sm ${colors.bg} text-left pl-4 text-zinc-50 overflow-hidden border-t-4 ${colors.border}`}
                       style={{
                         height: height,
                         top: topOffset,
                       }}
                     >
-                      <div className="p-1 truncate">{meeting.title}</div>
+                      <div className="p-1 pb-0 pl-0 text-zinc-950 text-md font-semibold truncate">
+                        {meeting.title}
+                      </div>
+                      <div className="pl-0 -mt-1 text-zinc-950 text-xs truncate">
+                        {meeting.startTime} - {meeting.endTime}
+                      </div>
                     </div>
                   );
                 }
