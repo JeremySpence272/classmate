@@ -1,15 +1,14 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { UpdateClassData } from '@/lib/types'
 
-
-
 export async function PUT(
-  request: Request,
-  { params }: { params: { id: string } }
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const id = parseInt(params.id)
+    const { id: idString } = await params
+    const id = parseInt(idString)
     const body = await request.json() as UpdateClassData
     const { title, type, meetings } = body
 
@@ -51,11 +50,12 @@ export async function PUT(
 }
 
 export async function DELETE(
-  request: Request,
-  { params }: { params: { id: string } }
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const id = parseInt(params.id)
+    const { id: idString } = await params
+    const id = parseInt(idString)
 
     const result = await prisma.class.delete({
       where: { id },
