@@ -12,3 +12,7 @@
 
 #logo colors
 https://coolors.co/ce527e-bc4ea5-aa41cd-a338da-e44f46
+
+##TODO
+
+- [] Set the edit button on individual classes pages to go back to previous page instead of going to home page

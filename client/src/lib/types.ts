@@ -27,6 +27,34 @@ export interface Class {
   meetings: ClassMeeting[];
 }
 
+// Note type
+export interface Note {
+  id: number;
+  classId: number;
+  classTitle: string;
+  classDate: string; // ISO date string
+  content: string;
+  createdAt: string; // ISO date string
+  updatedAt: string; // ISO date string
+}
+
+// Data for creating a new note
+export interface CreateNoteData {
+  classId: number;
+  classTitle: string;
+  classDate: string | Date; // ISO date string or Date object
+  content: string;
+}
+
+// Data for updating an existing note
+export interface UpdateNoteData {
+  id: number;
+  classId: number;
+  classTitle: string;
+  classDate: string | Date; // ISO date string or Date object
+  content: string;
+}
+
 // Data for creating a new class
 export interface CreateClassData {
   title: string;
@@ -63,6 +91,14 @@ export interface ClassCalendarProps {
   classes: Class[];
 }
 
+export interface ClassNotesProps {
+  classId: number;
+}
+
+export interface ClassTodosProps {
+  classId: number;
+}
+
 // Context types
 export interface ClassContextType {
   // Data
@@ -83,4 +119,14 @@ export interface ClassContextType {
   startAddingClass: () => void;
   startEditingClass: (classItem: Class) => void;
   cancelClassForm: () => void;
+}
+
+// Note context type
+export interface NoteContextType {
+  notes: Note[];
+  isLoading: boolean;
+  error: string | null;
+  fetchNotes: () => Promise<void>;
+  fetchNotesByClass: (classId: number) => Promise<Note[]>;
+  createNote: (noteData: CreateNoteData) => Promise<Note>;
 } 

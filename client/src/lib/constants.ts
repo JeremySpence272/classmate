@@ -46,4 +46,7 @@ export const DEFAULT_END_HOUR = 18; // 6 PM
 export const API_ENDPOINTS = {
   CLASSES: '/api/classes',
   CLASS: (id: number) => `/api/classes/${id}`,
+  NOTES: '/api/notes',
+  NOTES_BY_CLASS: (classId: number) => `/api/notes/class/${classId}`,
+  NOTE: (id: number) => `/api/notes/${id}`,
 }; 

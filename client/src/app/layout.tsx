@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { Toaster } from "sonner";
 import { ClassProvider } from "@/context/ClassContext";
+import { NoteProvider } from "@/context/NoteContext";
 
 export const metadata: Metadata = {
   title: "Classmate",
@@ -16,7 +17,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="min-h-screen bg-zinc-950">
-        <ClassProvider>{children}</ClassProvider>
+        <ClassProvider>
+          <NoteProvider>{children}</NoteProvider>
+        </ClassProvider>
         <Toaster
           theme="dark"
           position="bottom-right"

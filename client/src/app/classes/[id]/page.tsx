@@ -15,6 +15,8 @@ import {
 } from "@/components/ui/card";
 import { formatTime } from "@/lib/utils";
 import GlobalNav from "@/components/GlobalNav";
+import ClassNotes from "@/components/class/Notes";
+import ClassTodos from "@/components/class/Todos";
 
 export default function ClassPage() {
   const params = useParams();
@@ -126,7 +128,12 @@ export default function ClassPage() {
 
       <div className="container w-2/3 mx-auto py-6">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold text-white">{classData.title}</h1>
+          <div className=" flex flex-col">
+            <h1 className="text-3xl font-bold text-white">{classData.title}</h1>
+            <h3 className="text-md mt-2 capitalize font-medium text-zinc-400">
+              {classData.type}
+            </h3>
+          </div>
           <div className="flex gap-2">
             <Button
               onClick={handleEdit}
@@ -147,61 +154,31 @@ export default function ClassPage() {
           </div>
         </div>
 
-        <div className="flex flex-col gap-6">
-          <Card className="flex flex-row justify-between bg-transparent text-white border-zinc-800">
-            <CardHeader>
-              <CardTitle>Class Details</CardTitle>
-              <CardDescription className="text-zinc-500">
-                Basic information about this class
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-row gap-8 space-y-4">
-                <div>
-                  <h3 className="text-sm font-medium text-zinc-400">
-                    Class Type
-                  </h3>
-                  <p className="text-white capitalize">{classData.type}</p>
-                </div>
-                <div>
-                  <h3 className="text-sm font-medium text-zinc-400">Created</h3>
-                  <p className="text-white">
-                    {new Date(classData.createdAt).toLocaleDateString()}
-                  </p>
-                </div>
+        <div className="space-y-2 w-1/2 pr-3 mb-8">
+          {classData.meetings.map((meeting, index) => (
+            <div
+              key={index}
+              className="flex items-center py-2 px-3 rounded-md border border-zinc-800 bg-zinc-900/30"
+            >
+              <div className="text-sm flex items-center gap-4">
+                <span className="capitalize text-zinc-200">{meeting.day}</span>
+                <span className="text-zinc-400">•</span>
+                <span className="text-zinc-200">
+                  {formatTime(meeting.startTime)} -{" "}
+                  {formatTime(meeting.endTime)}
+                </span>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          ))}
+        </div>
 
-          <Card className="bg-transparent text-white border-zinc-800">
-            <CardHeader>
-              <CardTitle>Meeting Schedule</CardTitle>
-              <CardDescription className="text-zinc-500">
-                When this class meets
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                {classData.meetings.map((meeting, index) => (
-                  <div
-                    key={index}
-                    className="flex items-center py-2 px-3 rounded-md border border-zinc-800 bg-zinc-900/30"
-                  >
-                    <div className="text-sm flex items-center gap-4">
-                      <span className="capitalize text-zinc-200">
-                        {meeting.day}
-                      </span>
-                      <span className="text-zinc-400">•</span>
-                      <span className="text-zinc-200">
-                        {formatTime(meeting.startTime)} -{" "}
-                        {formatTime(meeting.endTime)}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+        <div className="flex flex-row gap-6">
+          <div className="w-2/3">
+            <ClassNotes classId={parseInt(params.id as string, 10)} />
+          </div>
+          <div className="w-1/3">
+            <ClassTodos classId={parseInt(params.id as string, 10)} />
+          </div>
         </div>
       </div>
     </>

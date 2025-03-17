@@ -13,6 +13,7 @@ model Class {
   type      String
   createdAt DateTime  @default(now()) @map("created_at")
   meetings  Meeting[]
+  notes     Note[]
 
   @@map("classes")
 }
@@ -27,4 +28,17 @@ model Meeting {
 
   @@unique([classId, day])
   @@map("class_meetings")
+}
+
+model Note {
+  id         Int      @id @default(autoincrement())
+  classId    Int      @map("class_id")
+  classTitle String   @map("class_title")
+  classDate  DateTime @map("class_date")
+  content    String
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+  class      Class    @relation(fields: [classId], references: [id], onDelete: Cascade)
+
+  @@map("notes")
 }
