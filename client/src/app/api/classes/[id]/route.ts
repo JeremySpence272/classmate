@@ -2,12 +2,16 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { UpdateClassData } from '@/lib/types'
 
-export async function PUT(
-  request: Request,
-  context: { params: { id: string } }
-) {
+// Define the params type
+type RouteParams = {
+  params: {
+    id: string;
+  };
+};
+
+export async function PUT(request: Request, { params }: RouteParams) {
   try {
-    const id = parseInt(context.params.id)
+    const id = parseInt(params.id)
     const body = await request.json() as UpdateClassData
     const { title, type, meetings } = body
 
@@ -48,12 +52,9 @@ export async function PUT(
   }
 }
 
-export async function DELETE(
-  request: Request,
-  context: { params: { id: string } }
-) {
+export async function DELETE(request: Request, { params }: RouteParams) {
   try {
-    const id = parseInt(context.params.id)
+    const id = parseInt(params.id)
 
     const result = await prisma.class.delete({
       where: { id },
