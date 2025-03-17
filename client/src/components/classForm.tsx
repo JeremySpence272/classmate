@@ -18,7 +18,10 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Clock, Check, Trash2 } from "lucide-react";
-import { useClassContext, Class, ClassMeeting } from "@/context/ClassContext";
+import { useClassContext } from "@/context/ClassContext";
+import { ClassMeeting, Day, ClassType } from "@/lib/types";
+import { DAYS_OF_WEEK, CLASS_TYPES } from "@/lib/constants";
+import { formatTime } from "@/lib/utils";
 
 interface ClassFormProps {
   onCancel: () => void;
@@ -27,49 +30,26 @@ interface ClassFormProps {
     isSubmitting: boolean;
     handleSubmit: () => Promise<void>;
   }) => void;
-  classData?: Class | null;
+  classData?: {
+    id: number;
+    title: string;
+    type: ClassType;
+    meetings: ClassMeeting[];
+  } | null;
 }
 
 interface MeetingTime {
-  day:
-    | "monday"
-    | "tuesday"
-    | "wednesday"
-    | "thursday"
-    | "friday"
-    | "saturday"
-    | "sunday"
-    | "";
+  day: Day | "";
   startTime: string;
   endTime: string;
 }
 
-const DAYS_OF_WEEK = [
-  "monday",
-  "tuesday",
-  "wednesday",
-  "thursday",
-  "friday",
-  "saturday",
-  "sunday",
-] as const;
-
-const formatTime = (time: string) => {
-  const [hours, minutes] = time.split(":");
-  const hour = parseInt(hours);
-  const ampm = hour >= 12 ? "PM" : "AM";
-  const hour12 = hour % 12 || 12;
-  return `${hour12}:${minutes} ${ampm}`;
-};
-
 // Memoize the form to prevent unnecessary re-renders
 const ClassForm = memo(
   ({ onCancel, onFormStateChange, classData }: ClassFormProps) => {
-    const { createClass, updateClass, error: contextError } = useClassContext();
+    const { createClass, updateClass } = useClassContext();
     const [title, setTitle] = useState(classData?.title || "");
-    const [type, setType] = useState<
-      "lecture" | "lab" | "seminar" | "discussion" | ""
-    >(classData?.type || "");
+    const [type, setType] = useState<ClassType | "">(classData?.type || "");
     const [currentMeeting, setCurrentMeeting] = useState<MeetingTime>({
       day: "",
       startTime: "",
@@ -79,7 +59,6 @@ const ClassForm = memo(
       classData?.meetings || []
     );
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [error, setError] = useState<string | null>(null);
     const isEditing = !!classData;
 
     // Update form fields when classData changes (for editing)
@@ -104,49 +83,27 @@ const ClassForm = memo(
       }
 
       setIsSubmitting(true);
-      setError(null);
-      try {
-        console.log("Submitting form:", {
-          isEditing,
-          title,
-          type,
-          meetings: lockedMeetings,
-        });
 
+      try {
         if (isEditing && classData) {
-          const result = await updateClass({
+          await updateClass({
             id: classData.id,
             title,
             type,
             meetings: lockedMeetings,
           });
-          console.log("Update result:", result);
-          toast.success("Class updated successfully");
         } else {
-          const result = await createClass({
+          await createClass({
             title,
             type,
             meetings: lockedMeetings,
           });
-          console.log("Create result:", result);
-          toast.success("Class created successfully");
         }
 
-        // Close form after successful creation or update
-        setTimeout(() => {
-          onCancel();
-        }, 500); // Increased timeout to ensure state updates complete
+        // Close form after successful submission
+        onCancel();
       } catch (err) {
-        const errorMessage =
-          err instanceof Error ? err.message : "An error occurred";
-        setError(errorMessage);
-        toast.error(
-          isEditing ? "Failed to update class" : "Failed to create class"
-        );
-        console.error(
-          isEditing ? "Failed to update class:" : "Failed to create class:",
-          err
-        );
+        console.error("Form submission error:", err);
       } finally {
         setIsSubmitting(false);
       }
@@ -180,15 +137,18 @@ const ClassForm = memo(
       onFormStateChange,
     ]);
 
-    const isCurrentMeetingComplete =
-      currentMeeting.day && currentMeeting.startTime && currentMeeting.endTime;
+    const isCurrentMeetingComplete = !!(
+      currentMeeting.day &&
+      currentMeeting.startTime &&
+      currentMeeting.endTime
+    );
 
     const addMeeting = useCallback(() => {
       if (!isCurrentMeetingComplete) return;
 
       // Convert MeetingTime to ClassMeeting by asserting the day is not empty
       const newMeeting: ClassMeeting = {
-        day: currentMeeting.day as Exclude<typeof currentMeeting.day, "">,
+        day: currentMeeting.day as Day,
         startTime: currentMeeting.startTime,
         endTime: currentMeeting.endTime,
       };
@@ -208,14 +168,14 @@ const ClassForm = memo(
       []
     );
 
-    const handleTypeChange = useCallback((value: typeof type) => {
-      setType(value);
+    const handleTypeChange = useCallback((value: string) => {
+      setType(value as ClassType);
     }, []);
 
     // Memoize the day selection callback
     const handleDayChange = useCallback(
       (value: string) => {
-        updateCurrentMeeting("day", value);
+        updateCurrentMeeting("day", value as Day);
       },
       [updateCurrentMeeting]
     );
@@ -270,10 +230,15 @@ const ClassForm = memo(
                     <SelectValue placeholder="Select" />
                   </SelectTrigger>
                   <SelectContent position="popper">
-                    <SelectItem value="lecture">Lecture</SelectItem>
-                    <SelectItem value="lab">Lab</SelectItem>
-                    <SelectItem value="seminar">Seminar</SelectItem>
-                    <SelectItem value="discussion">Discussion</SelectItem>
+                    {CLASS_TYPES.map((classType) => (
+                      <SelectItem
+                        key={classType}
+                        value={classType}
+                        className="capitalize"
+                      >
+                        {classType}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -380,12 +345,6 @@ const ClassForm = memo(
             </div>
           </CardContent>
         </Card>
-
-        {(error || contextError) && (
-          <div className="text-red-500 text-sm absolute bottom-4 left-4">
-            {error || contextError}
-          </div>
-        )}
       </form>
     );
   }

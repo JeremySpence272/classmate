@@ -7,8 +7,7 @@ import {
   CardContent,
 } from "@/components/ui/card";
 import { Clock, Edit, Trash2 } from "lucide-react";
-import { Class, useClassContext } from "@/context/ClassContext";
-import { toast } from "sonner";
+import { useClassContext } from "@/context/ClassContext";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,42 +17,31 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Class, ClassListProps } from "@/lib/types";
+import { useRouter } from "next/navigation";
+import { formatTime } from "@/lib/utils";
 
-const formatTime = (time: string) => {
-  const [hours, minutes] = time.split(":");
-  const hour = parseInt(hours);
-  const ampm = hour >= 12 ? "PM" : "AM";
-  const hour12 = hour % 12 || 12;
-  return `${hour12}:${minutes} ${ampm}`;
-};
-
-export interface ClassListProps {
-  classes: Class[];
-  isLoading: boolean;
-  error: string | null;
-  editClass: (classItem: Class) => void;
-}
-
-const ClassList: React.FC<ClassListProps> = ({
-  classes,
-  isLoading,
-  error,
-  editClass,
-}) => {
+const ClassList: React.FC<ClassListProps> = ({ classes, editClass }) => {
+  const router = useRouter();
   const { deleteClass } = useClassContext();
   const [isDeleting, setIsDeleting] = useState(false);
   const [classToDelete, setClassToDelete] = useState<Class | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
 
-  React.useEffect(() => {
-    console.log("Classes in ClassList component:", classes);
-  }, [classes]);
-
-  const handleDeleteClass = async (classItem: Class) => {
+  const handleDeleteClass = (classItem: Class, e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent navigation when clicking delete
     setClassToDelete(classItem);
     setDialogOpen(true);
+  };
+
+  const handleEditClass = (classItem: Class, e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent navigation when clicking edit
+    editClass(classItem);
+  };
+
+  const navigateToClass = (classId: number) => {
+    router.push(`/classes/${classId}`);
   };
 
   const confirmDelete = async () => {
@@ -62,10 +50,10 @@ const ClassList: React.FC<ClassListProps> = ({
     setIsDeleting(true);
     try {
       await deleteClass(classToDelete.id);
-      toast.success(`${classToDelete.title} deleted successfully`);
+      // No need for toast here as it's handled in the context
     } catch (err) {
-      toast.error(`Failed to delete ${classToDelete.title}`);
-      console.error("Error deleting class:", err);
+      // Error handling is now done in the context
+      console.error("Delete confirmation error:", err);
     } finally {
       setIsDeleting(false);
       setClassToDelete(null);
@@ -78,38 +66,30 @@ const ClassList: React.FC<ClassListProps> = ({
     setDialogOpen(false);
   };
 
-  if (isLoading) {
-    return <div className="text-zinc-400">Loading classes...</div>;
-  }
-
-  if (error) {
-    return <div className="text-red-400">Error: {error}</div>;
-  }
-
-  if (classes.length === 0) {
-    return (
-      <div className="text-zinc-400">No classes yet. Add your first class!</div>
-    );
-  }
-
   return (
     <>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4 w-2/3 ">
         {classes.map((classItem) => (
-          <Card key={classItem.id} className="bg-transparent border-zinc-800">
+          <Card
+            key={classItem.id}
+            className="bg-transparent border-zinc-800 cursor-pointer hover:border-zinc-700 transition-colors"
+            onClick={() => navigateToClass(classItem.id)}
+          >
             <CardHeader>
               <div className="flex justify-between items-center">
-                <CardTitle className="text-white">{classItem.title}</CardTitle>
+                <CardTitle className="text-white flex items-center">
+                  {classItem.title}
+                </CardTitle>
                 <div className="flex space-x-2">
                   <button
-                    onClick={() => editClass(classItem)}
-                    className="text-zinc-400 hover:text-white"
+                    onClick={(e) => handleEditClass(classItem, e)}
+                    className="text-zinc-400 cursor-pointer hover:text-white"
                   >
                     <Edit className="h-4 w-4" />
                   </button>
                   <button
-                    onClick={() => handleDeleteClass(classItem)}
-                    className="text-zinc-400 hover:text-red-500"
+                    onClick={(e) => handleDeleteClass(classItem, e)}
+                    className="text-zinc-400 cursor-pointer hover:text-red-500"
                     disabled={isDeleting}
                   >
                     <Trash2 className="h-4 w-4" />

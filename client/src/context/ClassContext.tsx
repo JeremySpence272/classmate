@@ -7,64 +7,15 @@ import React, {
   useCallback,
   ReactNode,
 } from "react";
-
-// Import types from useClasses
-export interface ClassMeeting {
-  id?: number;
-  day:
-    | "monday"
-    | "tuesday"
-    | "wednesday"
-    | "thursday"
-    | "friday"
-    | "saturday"
-    | "sunday";
-  startTime: string; // HH:MM format
-  endTime: string; // HH:MM format
-}
-
-export interface Class {
-  id: number;
-  title: string;
-  type: "lecture" | "lab" | "seminar" | "discussion";
-  created_at: string;
-  meetings: ClassMeeting[];
-}
-
-interface CreateClassData {
-  title: string;
-  type: Class["type"];
-  meetings: ClassMeeting[];
-}
-
-interface UpdateClassData {
-  id: number;
-  title: string;
-  type: Class["type"];
-  meetings: ClassMeeting[];
-}
-
-// Define the context state and functions
-interface ClassContextType {
-  // Data
-  classes: Class[];
-  isLoading: boolean;
-  error: string | null;
-
-  // UI State
-  isAddingClass: boolean;
-  isEditing: boolean;
-  selectedClass: Class | null;
-
-  // Functions
-  fetchClasses: () => Promise<void>;
-  createClass: (classData: CreateClassData) => Promise<Class>;
-  updateClass: (classData: UpdateClassData) => Promise<Class>;
-  deleteClass: (classId: number) => Promise<void>;
-  startAddingClass: () => void;
-  startEditingClass: (classItem: Class) => void;
-  cancelClassForm: () => void;
-}
+import { handleApiResponse, formatApiError } from "@/lib/api-middleware";
+import {
+  Class,
+  ClassContextType,
+  CreateClassData,
+  UpdateClassData,
+} from "@/lib/types";
+import { API_ENDPOINTS } from "@/lib/constants";
+import { toast } from "sonner";
 
 // Create the context with a default value
 const ClassContext = createContext<ClassContextType | undefined>(undefined);
@@ -75,7 +26,7 @@ export const ClassProvider: React.FC<{ children: ReactNode }> = ({
 }) => {
   // Data state
   const [classes, setClasses] = useState<Class[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   // UI state
@@ -83,121 +34,185 @@ export const ClassProvider: React.FC<{ children: ReactNode }> = ({
   const [isEditing, setIsEditing] = useState(false);
   const [selectedClass, setSelectedClass] = useState<Class | null>(null);
 
-  // Fetch all classes
+  // Initial fetch of classes
   const fetchClasses = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await fetch("http://localhost:3001/api/classes");
-      if (!response.ok) throw new Error("Failed to fetch classes");
-      const data = await response.json();
+      const response = await fetch(API_ENDPOINTS.CLASSES);
+      const data = await handleApiResponse<Class[]>(response);
       setClasses(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred");
+      const errorMessage = formatApiError(err);
+      setError(errorMessage);
+      console.error("Error fetching classes:", err);
+      toast.error("Failed to load classes");
     } finally {
       setIsLoading(false);
     }
   }, []);
 
-  // Create a new class
+  // Create a new class with optimistic update
   const createClass = useCallback(async (classData: CreateClassData) => {
-    setIsLoading(true);
-    setError(null);
+    // Generate a temporary ID for optimistic update
+    const tempId = Date.now();
+
+    // Create optimistic class object
+    const optimisticClass: Class = {
+      id: tempId,
+      title: classData.title,
+      type: classData.type,
+      createdAt: new Date().toISOString(),
+      meetings: classData.meetings.map((meeting, index) => ({
+        ...meeting,
+        id: index,
+      })),
+    };
+
+    // Optimistically update UI
+    setClasses((prevClasses) => [optimisticClass, ...prevClasses]);
+
     try {
-      const response = await fetch("http://localhost:3001/api/classes", {
+      // Make actual API call
+      const response = await fetch(API_ENDPOINTS.CLASSES, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(classData),
       });
-      if (!response.ok) throw new Error("Failed to create class");
-      const newClass = await response.json();
 
-      // Update state with new class
-      setClasses((prevClasses) => {
-        const updatedClasses = [newClass, ...prevClasses];
-        console.log("Classes after create:", updatedClasses);
-        return updatedClasses;
-      });
+      const newClass = await handleApiResponse<Class>(response);
 
+      // Replace optimistic class with real one from server
+      setClasses((prevClasses) =>
+        prevClasses.map((cls) => (cls.id === tempId ? newClass : cls))
+      );
+
+      toast.success(`${newClass.title} created successfully`);
       return newClass;
     } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred");
+      // Rollback optimistic update on error
+      setClasses((prevClasses) =>
+        prevClasses.filter((cls) => cls.id !== tempId)
+      );
+
+      const errorMessage = formatApiError(err);
+      setError(errorMessage);
+      console.error("Error creating class:", err);
+      toast.error(`Failed to create class: ${errorMessage}`);
       throw err;
-    } finally {
-      setIsLoading(false);
     }
   }, []);
 
-  // Update an existing class
+  // Update an existing class with optimistic update
   const updateClass = useCallback(
     async (classData: UpdateClassData) => {
-      setIsLoading(true);
-      setError(null);
-      try {
-        const response = await fetch(
-          `http://localhost:3001/api/classes/${classData.id}`,
-          {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(classData),
-          }
-        );
-        if (!response.ok) throw new Error("Failed to update class");
-        const updatedClass = await response.json();
+      // Store original class for potential rollback
+      const originalClass = classes.find((cls) => cls.id === classData.id);
+      if (!originalClass) {
+        const errorMsg = `Class with ID ${classData.id} not found`;
+        setError(errorMsg);
+        toast.error(errorMsg);
+        throw new Error(errorMsg);
+      }
 
-        // Update state with updated class
-        setClasses((prevClasses) => {
-          const updatedClasses = prevClasses.map((cls) =>
-            cls.id === updatedClass.id ? updatedClass : cls
-          );
-          console.log("Classes after update:", updatedClasses);
-          return updatedClasses;
+      // Create updated class object
+      const updatedClass: Class = {
+        ...originalClass,
+        title: classData.title,
+        type: classData.type,
+        meetings: classData.meetings,
+      };
+
+      // Optimistically update UI
+      setClasses((prevClasses) =>
+        prevClasses.map((cls) =>
+          cls.id === updatedClass.id ? updatedClass : cls
+        )
+      );
+
+      try {
+        // Make actual API call
+        const response = await fetch(API_ENDPOINTS.CLASS(classData.id), {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(classData),
         });
 
-        // Force a re-fetch to ensure we have the latest data
-        await fetchClasses();
+        const serverClass = await handleApiResponse<Class>(response);
 
-        return updatedClass;
+        // Update with server data (in case there were any differences)
+        setClasses((prevClasses) =>
+          prevClasses.map((cls) =>
+            cls.id === serverClass.id ? serverClass : cls
+          )
+        );
+
+        toast.success(`${serverClass.title} updated successfully`);
+        return serverClass;
       } catch (err) {
-        setError(err instanceof Error ? err.message : "An error occurred");
+        // Rollback optimistic update on error
+        if (originalClass) {
+          setClasses((prevClasses) =>
+            prevClasses.map((cls) =>
+              cls.id === originalClass.id ? originalClass : cls
+            )
+          );
+        }
+
+        const errorMessage = formatApiError(err);
+        setError(errorMessage);
+        console.error("Error updating class:", err);
+        toast.error(`Failed to update class: ${errorMessage}`);
         throw err;
-      } finally {
-        setIsLoading(false);
       }
     },
-    [fetchClasses]
+    [classes]
   );
 
-  // Delete a class
-  const deleteClass = useCallback(async (classId: number) => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const response = await fetch(
-        `http://localhost:3001/api/classes/${classId}`,
-        {
-          method: "DELETE",
-        }
-      );
-      if (!response.ok) throw new Error("Failed to delete class");
+  // Delete a class with optimistic update
+  const deleteClass = useCallback(
+    async (classId: number) => {
+      // Store original class for potential rollback
+      const originalClass = classes.find((cls) => cls.id === classId);
+      if (!originalClass) {
+        const errorMsg = `Class with ID ${classId} not found`;
+        setError(errorMsg);
+        toast.error(errorMsg);
+        throw new Error(errorMsg);
+      }
 
-      // Update state by removing the deleted class
-      setClasses((prevClasses) => {
-        const updatedClasses = prevClasses.filter((cls) => cls.id !== classId);
-        console.log("Classes after delete:", updatedClasses);
-        return updatedClasses;
-      });
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred");
-      throw err;
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+      // Optimistically update UI
+      setClasses((prevClasses) =>
+        prevClasses.filter((cls) => cls.id !== classId)
+      );
+
+      try {
+        // Make actual API call
+        const response = await fetch(API_ENDPOINTS.CLASS(classId), {
+          method: "DELETE",
+        });
+
+        await handleApiResponse(response);
+        toast.success(`${originalClass.title} deleted successfully`);
+      } catch (err) {
+        // Rollback optimistic update on error
+        if (originalClass) {
+          setClasses((prevClasses) => [...prevClasses, originalClass]);
+        }
+
+        const errorMessage = formatApiError(err);
+        setError(errorMessage);
+        console.error("Error deleting class:", err);
+        toast.error(`Failed to delete class: ${errorMessage}`);
+        throw err;
+      }
+    },
+    [classes]
+  );
 
   // UI state management functions
   const startAddingClass = useCallback(() => {
@@ -210,7 +225,6 @@ export const ClassProvider: React.FC<{ children: ReactNode }> = ({
     setIsEditing(true);
     setSelectedClass(classItem);
     setIsAddingClass(false);
-    console.log("Editing class:", classItem);
   }, []);
 
   const cancelClassForm = useCallback(() => {
