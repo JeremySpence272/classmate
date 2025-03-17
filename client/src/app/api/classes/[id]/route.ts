@@ -4,10 +4,10 @@ import { UpdateClassData } from '@/lib/types'
 
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
   try {
-    const id = parseInt(params.id)
+    const id = parseInt(context.params.id)
     const body = await request.json() as UpdateClassData
     const { title, type, meetings } = body
 
@@ -50,10 +50,10 @@ export async function PUT(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
   try {
-    const id = parseInt(params.id)
+    const id = parseInt(context.params.id)
 
     const result = await prisma.class.delete({
       where: { id },
