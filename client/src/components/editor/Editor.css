@@ -1,0 +1,554 @@
+/* TipTap Editor Styles - Dark Mode */
+:root {
+  --editor-bg: #18181b; /* zinc-900 */
+  --editor-border: #3f3f46; /* zinc-700 */
+  --editor-text: #f4f4f5; /* zinc-100 */
+  --editor-text-muted: #a1a1aa; /* zinc-400 */
+  --editor-code-bg: #27272a; /* zinc-800 */
+  --editor-code-block-bg: #18181b; /* zinc-900 */
+  --editor-code-border: #3f3f46; /* zinc-700 */
+  --editor-blockquote-border: #52525b; /* zinc-600 */
+  --editor-hr: #3f3f46; /* zinc-700 */
+  --editor-heading-color: #ffffff; /* white */
+  --editor-link: #93c5fd; /* blue-300 */
+  --editor-link-hover: #60a5fa; /* blue-400 */
+  --editor-selection-bg: rgba(147, 197, 253, 0.2); /* blue-300 with opacity */
+  --editor-table-border: #3f3f46; /* zinc-700 */
+  --editor-table-header-bg: #27272a; /* zinc-800 */
+  --editor-table-cell-bg: #18181b; /* zinc-900 */
+  --editor-table-selected-cell-bg: rgba(147, 197, 253, 0.05); /* blue-300 with low opacity */
+  --editor-resize-handle-bg: #93c5fd; /* blue-300 */
+  --editor-highlight-bg: rgba(251, 200, 0, 0.65); /* yellow-400 with opacity */
+  --editor-highlight-color: #f4f4f5; /* zinc-100 */
+  --editor-image-border: #3f3f46; /* zinc-700 */
+  --editor-image-shadow: rgba(0, 0, 0, 0.2);
+  --editor-bubble-bg: #27272a; /* zinc-800 */
+  --editor-bubble-border: #3f3f46; /* zinc-700 */
+  --editor-bubble-hover: #3f3f46; /* zinc-700 */
+  --editor-active-item: #4b5563; /* gray-600 */
+  --editor-tooltip-bg: #18181b; /* zinc-900 */
+  --editor-tooltip-text: #e4e4e7; /* zinc-200 */
+}
+
+/* Basic editor styles */
+.tiptap {
+  color: var(--editor-text);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  line-height: 1.5;
+  outline: none;
+  padding: 0.5rem;
+}
+
+.tiptap :first-child {
+  margin-top: 0;
+}
+
+/* Text selection styles */
+.tiptap ::selection {
+  background: var(--editor-selection-bg);
+}
+
+/* Paragraph styles */
+.tiptap p {
+  margin: 0.75rem 0;
+}
+
+/* List styles */
+.tiptap ul, 
+.tiptap ol {
+  padding: 0 1rem;
+  margin: 1.25rem 1rem 1.25rem 0.4rem;
+}
+
+.tiptap ul li,
+.tiptap ol li {
+  margin: 0.5rem 0;
+}
+
+.tiptap ul li p,
+.tiptap ol li p {
+  margin-top: 0.25em;
+  margin-bottom: 0.25em;
+}
+
+.tiptap ul {
+  list-style: disc;
+}
+
+.tiptap ol {
+  list-style: decimal;
+}
+
+/* Heading styles */
+.tiptap h1, 
+.tiptap h2, 
+.tiptap h3, 
+.tiptap h4, 
+.tiptap h5, 
+.tiptap h6 {
+  color: var(--editor-heading-color);
+  font-weight: 600;
+  line-height: 1.1;
+  margin-top: 2.5rem;
+  text-wrap: pretty;
+}
+
+.tiptap h1, 
+.tiptap h2 {
+  margin-top: 3.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.tiptap h1 { 
+  font-size: 1.875rem; /* 30px */
+  font-weight: 700;
+}
+
+.tiptap h2 { 
+  font-size: 1.5rem; /* 24px */
+}
+
+.tiptap h3 { 
+  font-size: 1.25rem; /* 20px */
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+}
+
+.tiptap h4, 
+.tiptap h5, 
+.tiptap h6 { 
+  font-size: 1rem; /* 16px */
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+}
+
+/* Link styles */
+.tiptap a {
+  color: var(--editor-link);
+  text-decoration: underline;
+  text-decoration-thickness: 0.08em;
+  text-underline-offset: 0.15em;
+}
+
+/* Image styles */
+.tiptap img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.5rem;
+  border: 1px solid var(--editor-image-border);
+  margin: 1.5rem 0;
+  box-shadow: 0 2px 8px var(--editor-image-shadow);
+}
+
+.tiptap img.ProseMirror-selectednode {
+  outline: 2px solid var(--editor-link);
+  border-color: var(--editor-link);
+}
+
+.tiptap .image-resizer {
+  display: inline-flex;
+  position: relative;
+  max-width: 100%;
+}
+
+.tiptap .image-resizer img {
+  max-width: 100%;
+  height: auto;
+  margin: 0;
+}
+
+/* Code and preformatted text styles */
+.tiptap code {
+  background-color: var(--editor-code-bg);
+  border-radius: 0.25rem;
+  color: var(--editor-text);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.85rem;
+  padding: 0.25em 0.3em;
+}
+
+.tiptap pre {
+  background: var(--editor-code-block-bg);
+  border: 1px solid var(--editor-code-border);
+  border-radius: 0.5rem;
+  color: var(--editor-text);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  margin: 1.5rem 0;
+  overflow-x: auto;
+  padding: 0.75rem 1rem;
+}
+
+.tiptap pre code {
+  background: none;
+  border: none;
+  color: inherit;
+  font-size: 0.875rem;
+  padding: 0;
+}
+
+/* Blockquote styles */
+.tiptap blockquote {
+  border-left: 3px solid var(--editor-blockquote-border);
+  color: var(--editor-text-muted);
+  font-style: italic;
+  margin: 1.5rem 0;
+  padding: 0.5rem 0 0.5rem 1rem;
+}
+
+/* Horizontal rule */
+.tiptap hr {
+  border: none;
+  border-top: 1px solid var(--editor-hr);
+  margin: 2rem 0;
+}
+
+/* Table styles */
+.tiptap table {
+  border-collapse: collapse;
+  margin: 1.5rem 0;
+  table-layout: fixed;
+  width: 100%;
+  font-size: 0.95rem;
+  overflow: hidden;
+  border: 1px solid var(--editor-table-border);
+  border-radius: 0.25rem;
+}
+
+.tiptap th,
+.tiptap td {
+  border: 1px solid var(--editor-table-border);
+  padding: 0.6rem;
+  position: relative;
+  vertical-align: top;
+  text-align: left;
+}
+
+.tiptap th {
+  background-color: var(--editor-table-header-bg);
+  font-weight: 600;
+}
+
+/* Selected cells styling */
+.tiptap td.selectedCell,
+.tiptap th.selectedCell {
+  background-color: var(--editor-table-selected-cell-bg);
+  position: relative;
+}
+
+/* Resizable table styles */
+.tiptap .tableWrapper {
+  overflow-x: auto;
+  padding: 0.5rem 0;
+}
+
+.tiptap .column-resize-handle {
+  background-color: var(--editor-resize-handle-bg);
+  bottom: 0;
+  pointer-events: none;
+  position: absolute;
+  right: -2px;
+  top: 0;
+  width: 4px;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  z-index: 20;
+}
+
+.tiptap table:hover .column-resize-handle {
+  opacity: 0.3;
+}
+
+.tiptap .column-resize-handle:hover,
+.tiptap .column-resize-handle.dragging {
+  opacity: 1 !important;
+  background-color: var(--editor-link);
+}
+
+/* Hide default outline when table cell has focus */
+.tiptap td:focus, 
+.tiptap th:focus {
+  outline: none;
+}
+
+/* Mark (highlight) */
+.tiptap mark {
+  background-color: var(--editor-highlight-bg);
+  color: var(--editor-highlight-color);
+  padding: 0.1em;
+  border-radius: 0.2em;
+}
+
+/* Content editable placeholder */
+.tiptap p.is-editor-empty:first-child::before {
+  color: var(--editor-text-muted);
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+
+/* Bubble menu styles */
+.bubble-menu {
+  display: flex;
+  background-color: var(--editor-bubble-bg);
+  border-radius: 6px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  padding: 4px;
+  transform: translateY(-8px);
+  z-index: 50;
+  border: 1px solid var(--editor-bubble-border);
+  max-width: 98vw;
+  overflow-x: auto;
+}
+
+.bubble-menu > div {
+  display: flex;
+  align-items: center;
+}
+
+.bubble-menu button {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bubble-menu button svg {
+  width: 16px;
+  height: 16px;
+}
+
+.bubble-menu .w-px {
+  margin: 0 4px;
+}
+
+.bubble-link-menu {
+  min-width: 300px;
+}
+
+.bubble-link-menu input {
+  background-color: var(--editor-code-bg);
+  border-color: var(--editor-bubble-border);
+  color: var(--editor-text);
+}
+
+.bubble-link-menu input:focus {
+  outline: none;
+  border-color: var(--editor-link);
+}
+
+/* Dropdown menu button styles */
+.bubble-menu .relative button[class*="flex items-center gap-1"] {
+  height: 32px;
+  font-size: 13px;
+  color: var(--editor-text);
+  min-width: 120px;
+  background-color: transparent;
+}
+
+.bubble-menu .relative button[class*="flex items-center gap-1"]:hover {
+  background-color: var(--editor-bubble-hover);
+}
+
+/* Dropdown menu styles - now implemented with portal */
+div[class*="bg-zinc-800"][style*="position: absolute"] {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  animation: fadeIn 0.15s ease-out;
+}
+
+/* Link menu portal styles */
+.bubble-link-menu[style*="position: absolute"] {
+  animation: fadeIn 0.15s ease-out;
+  z-index: 9999 !important;
+}
+
+.bubble-link-menu[style*="position: absolute"] .flex {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Dropdown buttons */
+div[class*="bg-zinc-800"][style*="position: absolute"] button {
+  width: 100%;
+  height: auto;
+  padding: 8px 12px;
+  justify-content: flex-start;
+  border-radius: 4px;
+  margin: 2px 0;
+  transition: background-color 0.15s ease;
+}
+
+div[class*="bg-zinc-800"][style*="position: absolute"] button:hover {
+  background-color: var(--editor-bubble-hover);
+}
+
+/* Active dropdown item */
+div[class*="bg-zinc-800"][style*="position: absolute"] button.bg-zinc-700 {
+  background-color: var(--editor-active-item);
+  color: white;
+}
+
+/* Mobile responsive styles */
+@media (max-width: 640px) {
+  .bubble-menu {
+    transform: translateY(-8px) scale(0.9);
+    transform-origin: center top;
+    flex-wrap: wrap;
+  }
+  
+  .bubble-menu > div {
+    flex-wrap: wrap;
+  }
+  
+  .bubble-link-menu {
+    min-width: 250px;
+  }
+  
+  .bubble-menu button {
+    width: 30px;
+    height: 30px;
+  }
+}
+
+/* Tippy styles for tooltips */
+.tippy-box {
+  background-color: var(--editor-tooltip-bg);
+  color: var(--editor-tooltip-text);
+  border-radius: 4px;
+  font-size: 12px;
+  line-height: 1.4;
+  white-space: nowrap;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.tippy-arrow {
+  color: var(--editor-tooltip-bg);
+}
+
+/* Add link styles in the editor */
+.tiptap a.editor-link {
+  color: var(--editor-link);
+  text-decoration: underline;
+  text-decoration-thickness: 0.08em;
+  text-underline-offset: 0.15em;
+  transition: color 0.2s;
+}
+
+.tiptap a.editor-link:hover {
+  color: var(--editor-link-hover, #60a5fa); /* blue-400 */
+}
+
+/* Link dropdown styles */
+.bubble-link-dropdown {
+  animation: fadeIn 0.15s ease-out;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(2px);
+}
+
+.bubble-link-dropdown input {
+  background-color: var(--editor-code-bg);
+  border-color: var(--editor-bubble-border);
+  color: var(--editor-text);
+  transition: border-color 0.2s;
+  width: 100%;
+}
+
+.bubble-link-dropdown input:focus {
+  outline: none;
+  border-color: var(--editor-link);
+}
+
+.bubble-link-dropdown button {
+  height: 28px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  transition: background-color 0.15s ease;
+}
+
+/* Slash command menu styles */
+.slash-commands-menu {
+  background-color: var(--editor-bubble-bg);
+  border: 1px solid var(--editor-bubble-border);
+  border-radius: 0.5rem;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  width: 280px;
+  max-height: 400px;
+  z-index: 100;
+  animation: fadeIn 0.15s ease-out;
+}
+
+.slash-commands-menu button {
+  transition: background-color 0.15s;
+}
+
+.slash-commands-menu button:hover {
+  background-color: var(--editor-bubble-hover);
+}
+
+.slash-commands-menu button.bg-zinc-700 {
+  background-color: var(--editor-active-item);
+}
+
+.slash-commands-menu .text-zinc-200 {
+  color: var(--editor-text);
+}
+
+.slash-commands-menu .text-zinc-400 {
+  color: var(--editor-text-muted);
+}
+
+/* Add column styles after the existing styles */
+.tiptap .column-block {
+  width: 100%;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 24px;
+  padding: 8px 0;
+  margin: 1.5rem 0;
+  border-top: 1px dashed var(--editor-border);
+  border-bottom: 1px dashed var(--editor-border);
+}
+
+.tiptap .column {
+  overflow: hidden;
+  padding: 8px;
+  margin: -8px;
+}
+
+.tiptap.ProseMirror-focused .column {
+  border: 1px dashed var(--editor-border);
+  border-radius: 8px;
+  background-color: rgba(255, 255, 255, 0.02);
+}
+
+.tiptap .column > * {
+  margin-top: 0.5rem;
+}
+
+.tiptap .column > *:first-child {
+  margin-top: 0;
+}
+
+/* Add to the responsive styles for mobile devices */
+@media (max-width: 640px) {
+  .tiptap .column-block {
+    grid-auto-flow: row;
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Add to the existing slash-commands-menu styles */
+.slash-commands-menu button.columns-btn .text-zinc-400 {
+  color: var(--editor-text-muted);
+} 

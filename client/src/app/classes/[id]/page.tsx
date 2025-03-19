@@ -124,6 +124,24 @@ export default function ClassPage() {
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back to Classes
         </Button>
+        <div className="flex gap-2">
+          <Button
+            onClick={handleEdit}
+            variant="outline"
+            className="bg-transparent text-white border-zinc-800"
+          >
+            <Edit className="h-4 w-4 mr-2" />
+            Edit
+          </Button>
+          <Button
+            onClick={handleDelete}
+            variant="outline"
+            className="bg-transparent hover:text-red-400 text-red-400 border-red-800/50 hover:bg-red-700/20"
+          >
+            <Trash2 className="h-4 w-4 mr-2" />
+            Delete
+          </Button>
+        </div>
       </GlobalNav>
 
       <div className="container w-2/3 mx-auto py-6">
@@ -134,27 +152,9 @@ export default function ClassPage() {
               {classData.type}
             </h3>
           </div>
-          <div className="flex gap-2">
-            <Button
-              onClick={handleEdit}
-              variant="outline"
-              className="bg-transparent text-white border-zinc-800"
-            >
-              <Edit className="h-4 w-4 mr-2" />
-              Edit
-            </Button>
-            <Button
-              onClick={handleDelete}
-              variant="outline"
-              className="bg-transparent hover:text-red-400 text-red-400 border-red-800/50 hover:bg-red-700/20"
-            >
-              <Trash2 className="h-4 w-4 mr-2" />
-              Delete
-            </Button>
-          </div>
         </div>
 
-        <div className="space-y-2 w-1/2 pr-3 mb-8">
+        <div className="flex flex-row gap-2 w-1/2 pr-3 mb-8">
           {classData.meetings.map((meeting, index) => (
             <div
               key={index}
