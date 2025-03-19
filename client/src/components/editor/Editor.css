@@ -26,7 +26,7 @@
   --editor-bubble-border: #3f3f46; /* zinc-700 */
   --editor-bubble-hover: #3f3f46; /* zinc-700 */
   --editor-active-item: #4b5563; /* gray-600 */
-  --editor-tooltip-bg: #18181b; /* zinc-900 */
+  --editor-tooltip-bg: transparent; /* zinc-900 */
   --editor-tooltip-text: #e4e4e7; /* zinc-200 */
 }
 
@@ -36,7 +36,7 @@
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   line-height: 1.5;
   outline: none;
-  padding: 0.5rem;
+  
 }
 
 .tiptap :first-child {
@@ -89,13 +89,13 @@
   color: var(--editor-heading-color);
   font-weight: 600;
   line-height: 1.1;
-  margin-top: 2.5rem;
+  margin-top: 1.5rem;
   text-wrap: pretty;
 }
 
 .tiptap h1, 
 .tiptap h2 {
-  margin-top: 3.5rem;
+  margin-top: 1.5rem;
   margin-bottom: 1.5rem;
 }
 
@@ -239,7 +239,7 @@
 /* Resizable table styles */
 .tiptap .tableWrapper {
   overflow-x: auto;
-  padding: 0.5rem 0;
+  padding: 0rem 0;
 }
 
 .tiptap .column-resize-handle {
@@ -253,16 +253,19 @@
   opacity: 0;
   transition: opacity 0.2s ease;
   z-index: 20;
+  cursor: pointer;
 }
 
 .tiptap table:hover .column-resize-handle {
   opacity: 0.3;
+  cursor: pointer;
 }
 
 .tiptap .column-resize-handle:hover,
 .tiptap .column-resize-handle.dragging {
   opacity: 1 !important;
   background-color: var(--editor-link);
+  cursor: pointer;
 }
 
 /* Hide default outline when table cell has focus */
@@ -291,13 +294,13 @@
 /* Bubble menu styles */
 .bubble-menu {
   display: flex;
-  background-color: var(--editor-bubble-bg);
+  background-color: transparent;
   border-radius: 6px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  /* box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4); */
   padding: 4px;
   transform: translateY(-8px);
   z-index: 50;
-  border: 1px solid var(--editor-bubble-border);
+  /* border: 1px solid var(--editor-bubble-border); */
   max-width: 98vw;
   overflow-x: auto;
 }
@@ -514,7 +517,7 @@ div[class*="bg-zinc-800"][style*="position: absolute"] button.bg-zinc-700 {
   grid-auto-flow: column;
   grid-auto-columns: 1fr;
   gap: 24px;
-  padding: 8px 0;
+  padding: 20px 0 0 0;
   margin: 1.5rem 0;
   border-top: 1px dashed var(--editor-border);
   border-bottom: 1px dashed var(--editor-border);

@@ -2,20 +2,22 @@
 
 import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Note } from "@/lib/types";
+import { Note, EditorContent } from "@/lib/types";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Edit, Trash2 } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { format } from "date-fns";
 import GlobalNav from "@/components/GlobalNav";
-import { Card } from "@/components/ui/card";
-import { markdownToStyledHtml } from "@/lib/utils";
 import { API_ENDPOINTS } from "@/lib/constants";
 import { handleApiResponse } from "@/lib/api-middleware";
+import TipTapEditor from "@/components/editor/Editor";
+import { normalizeContent } from "@/lib/editor-utils";
+import { JSONContent } from "@tiptap/react";
 
 export default function NotePage() {
   const params = useParams();
   const router = useRouter();
   const [note, setNote] = useState<Note | null>(null);
+  const [editorContent, setEditorContent] = useState<JSONContent | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -40,6 +42,44 @@ export default function NotePage() {
 
         const noteData = await handleApiResponse<Note>(response);
         setNote(noteData);
+
+        // Process the content for the editor
+        if (noteData.content) {
+          try {
+            // Handle different content formats
+            if (typeof noteData.content === "object") {
+              if (noteData.content.type === "doc") {
+                // It's already in the right format, just use it directly
+                setEditorContent(noteData.content as unknown as JSONContent);
+              } else if (
+                "content" in noteData.content &&
+                typeof noteData.content.content === "object"
+              ) {
+                // This is likely an EditorContent object with nested content
+                // Extract the content array for the editor
+                setEditorContent(
+                  noteData.content.content as unknown as JSONContent
+                );
+              } else {
+                // Unknown object format, try to normalize
+                const normalized = normalizeContent(noteData.content);
+                setEditorContent(normalized as unknown as JSONContent);
+              }
+            } else if (typeof noteData.content === "string") {
+              // Convert string content to JSONContent
+              const normalized = normalizeContent(noteData.content);
+              setEditorContent(normalized as unknown as JSONContent);
+            } else {
+              // Fallback to empty content
+              console.warn("Unknown content format");
+              setEditorContent(null);
+            }
+          } catch (err) {
+            console.error("Error processing note content:", err);
+            setError("Failed to process note content");
+          }
+        }
+
         setError(null);
       } catch (err) {
         console.error("Error loading note:", err);
@@ -56,17 +96,9 @@ export default function NotePage() {
     router.push(`/classes/${params.id}`);
   };
 
-  const handleEdit = () => {
-    // This will be implemented for editing notes
-    console.log("Edit note:", note?.id);
-  };
-
-  const handleDelete = () => {
-    // This will be implemented for deleting notes
-    if (window.confirm("Are you sure you want to delete this note?")) {
-      console.log("Delete note:", note?.id);
-      router.push(`/classes/${params.id}`); // Return to class page
-    }
+  const handleEditorChange = (html: string) => {
+    // Just log the content change for now, we'll implement saving later
+    console.log("Editor content changed:", html);
   };
 
   // Render loading state
@@ -98,7 +130,7 @@ export default function NotePage() {
     );
   }
 
-  if (!note) {
+  if (!note || !editorContent) {
     return null;
   }
 
@@ -113,8 +145,9 @@ export default function NotePage() {
     "MMM d, yyyy h:mm a"
   );
 
-  // Convert markdown to styled HTML
-  const contentHtml = markdownToStyledHtml(note.content);
+  // Add debugging log to see the editorContent structure
+  console.log("Editor content type:", typeof editorContent);
+  console.log("Editor content:", editorContent);
 
   return (
     <>
@@ -137,29 +170,32 @@ export default function NotePage() {
               {formattedClassDate}
             </h3>
           </div>
-          {/* <div className="flex gap-2">
-            <Button
-              onClick={handleEdit}
-              variant="outline"
-              className="bg-transparent text-white border-zinc-800"
-            >
-              <Edit className="h-4 w-4 mr-2" />
-              Edit
-            </Button>
-            <Button
-              onClick={handleDelete}
-              variant="outline"
-              className="bg-transparent hover:text-red-400 text-red-400 border-red-800/50 hover:bg-red-700/20"
-            >
-              <Trash2 className="h-4 w-4 mr-2" />
-              Delete
-            </Button>
-          </div> */}
         </div>
 
-        <Card className="p-6 border-zinc-800 bg-zinc-900/30">
-          <div dangerouslySetInnerHTML={{ __html: contentHtml }} />
-        </Card>
+        <div className="mb-4 p-3 bg-zinc-800/50 rounded-lg border border-zinc-700/50 text-sm text-zinc-300">
+          <div className="flex items-center gap-4">
+            <div className="w-[3%] flex justify-center">
+              <span className="text-xl">💡</span>
+            </div>
+            <div className="w-[97%]">
+              <p>
+                Use the bubble menu (appears when selecting text) for quick
+                formatting. Try the slash command (type{" "}
+                <code className="px-1.5 py-0.5 bg-zinc-700/50 rounded text-xs">
+                  /
+                </code>
+                ) for advanced features like tables and images.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Use your existing TipTap editor */}
+        <TipTapEditor
+          initialContent={editorContent}
+          darkMode={true}
+          onChange={handleEditorChange}
+        />
 
         <div className="mt-4 text-xs text-zinc-500">
           <p>Created: {formattedCreatedDate}</p>

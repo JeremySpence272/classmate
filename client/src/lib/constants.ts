@@ -47,6 +47,6 @@ export const API_ENDPOINTS = {
   CLASSES: '/api/classes',
   CLASS: (id: number) => `/api/classes/${id}`,
   NOTES: '/api/notes',
-  NOTES_BY_CLASS: (classId: number) => `/api/notes/class/${classId}`,
-  NOTE: (id: number) => `/api/notes/${id}`,
+  NOTE: (id: number) => `/api/notes?id=${id}`,
+  NOTES_BY_CLASS: (classId: number) => `/api/notes?classId=${classId}`,
 }; 

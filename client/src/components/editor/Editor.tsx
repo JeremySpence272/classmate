@@ -1,7 +1,12 @@
 import { Color } from "@tiptap/extension-color";
 import ListItem from "@tiptap/extension-list-item";
 import TextStyle from "@tiptap/extension-text-style";
-import { EditorProvider, useCurrentEditor, BubbleMenu } from "@tiptap/react";
+import {
+  EditorProvider,
+  useCurrentEditor,
+  BubbleMenu,
+  JSONContent,
+} from "@tiptap/react";
 import { Editor, Extension, Range } from "@tiptap/core";
 import StarterKit from "@tiptap/starter-kit";
 import { Placeholder } from "@tiptap/extension-placeholder";
@@ -496,7 +501,7 @@ const MenuBar = ({ darkMode = true }: MenuBarProps) => {
 };
 
 interface EditorProps {
-  initialContent?: string;
+  initialContent?: string | JSONContent;
   darkMode?: boolean;
   onChange?: (html: string) => void;
 }
@@ -561,11 +566,6 @@ const defaultContent = `
       <td>Biology</td>
       <td>Study of living organisms</td>
       <td>Science</td>
-    </tr>
-    <tr>
-      <td>History</td>
-      <td>Study of past events</td>
-      <td>Humanities</td>
     </tr>
   </tbody>
 </table>
@@ -1365,6 +1365,10 @@ const TipTapEditor: React.FC<EditorProps> = ({
   darkMode = true,
   onChange,
 }) => {
+  const [processedContent, setProcessedContent] = useState<
+    string | JSONContent
+  >(defaultContent);
+
   useEffect(() => {
     // Import tippy dynamically to avoid server/client mismatch
     if (!tippyInstance) {
@@ -1373,6 +1377,43 @@ const TipTapEditor: React.FC<EditorProps> = ({
       });
     }
   }, []);
+
+  useEffect(() => {
+    // Add debug logs to see what we're receiving
+    console.log("TipTapEditor initialContent:", initialContent);
+    console.log("initialContent type:", typeof initialContent);
+
+    // Process initialContent to ensure it's valid
+    if (initialContent) {
+      try {
+        // If it's a valid JSONContent object with the required schema structure
+        if (
+          typeof initialContent === "object" &&
+          initialContent !== null &&
+          "type" in initialContent
+        ) {
+          console.log("Using JSONContent object directly");
+          // Force a new reference to ensure the editor sees the change
+          const contentCopy = JSON.parse(JSON.stringify(initialContent));
+          setProcessedContent(contentCopy);
+        } else if (typeof initialContent === "string") {
+          // If it's a string, use as is (should be HTML)
+          console.log("Using string content");
+          setProcessedContent(initialContent);
+        } else {
+          // Fall back to default content if invalid
+          console.warn("Invalid editor content format, using default");
+          setProcessedContent(defaultContent);
+        }
+      } catch (error) {
+        console.error("Error processing editor content:", error);
+        setProcessedContent(defaultContent);
+      }
+    } else {
+      console.log("No initialContent provided, using default");
+      setProcessedContent(defaultContent);
+    }
+  }, [initialContent]);
 
   const extensions = [
     Color.configure({ types: [TextStyle.name, ListItem.name] }),
@@ -1386,6 +1427,8 @@ const TipTapEditor: React.FC<EditorProps> = ({
         keepMarks: true,
         keepAttributes: false,
       },
+      // Disable the built-in dropcursor to avoid duplication
+      dropcursor: false,
     }),
     Placeholder.configure({
       placeholder: "Start typing here...",
@@ -1421,14 +1464,11 @@ const TipTapEditor: React.FC<EditorProps> = ({
   ];
 
   return (
-    <div
-      className={`border ${
-        darkMode ? "border-zinc-700 bg-zinc-900" : "border-gray-300 bg-white"
-      } rounded-lg p-4`}
-    >
+    <div className="bg-transparent">
       <EditorProvider
+        key={JSON.stringify(processedContent)}
         extensions={extensions}
-        content={initialContent}
+        content={processedContent}
         onUpdate={({ editor }) => {
           onChange && onChange(editor.getHTML());
         }}
@@ -1437,6 +1477,7 @@ const TipTapEditor: React.FC<EditorProps> = ({
             class: `tiptap focus:outline-none prose-sm sm:prose-base lg:prose-lg max-w-none`,
           },
         }}
+        immediatelyRender={false}
       >
         <EditorBubbleMenu darkMode={darkMode} />
       </EditorProvider>

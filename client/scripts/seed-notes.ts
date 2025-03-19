@@ -1,10 +1,10 @@
-import { mockBiologyNotes } from '../src/mocks/notesMock';
-import { CreateNoteData } from '../src/lib/types';
+import { mockBiologyNotes } from '../src/mocks/notesMock.js';
+import { CreateNoteData } from '../src/lib/types.js';
 
 const API_URL = 'http://localhost:3000/api/notes';
 
 async function seedNotes() {
-  console.log('Seeding mock notes to the database...');
+  console.log('Seeding mock notes with JSON content to the database...');
   
   // Get existing classes to make sure we're using valid class IDs
   try {
@@ -24,6 +24,35 @@ async function seedNotes() {
     // Use the first class ID for our mock data
     const targetClassId = classes[0].id;
     console.log(`Using class ID ${targetClassId} for seeding notes...`);
+    
+    // Delete existing notes for this class to avoid duplicates
+    console.log(`Cleaning up existing notes for class ID ${targetClassId}...`);
+    try {
+      const existingNotesResponse = await fetch(`http://localhost:3000/api/notes?classId=${targetClassId}`);
+      if (existingNotesResponse.ok) {
+        const existingNotes = await existingNotesResponse.json();
+        console.log(`Found ${existingNotes.length} existing notes for this class.`);
+        
+        // Delete them if there are any
+        if (existingNotes.length > 0) {
+          console.log('Deleting existing notes...');
+          for (const note of existingNotes) {
+            const deleteResponse = await fetch(`http://localhost:3000/api/notes?id=${note.id}`, {
+              method: 'DELETE',
+            });
+            
+            if (deleteResponse.ok) {
+              console.log(`Deleted note ID: ${note.id}`);
+            } else {
+              console.warn(`Failed to delete note ID: ${note.id}`);
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.warn('Error cleaning up existing notes:', error);
+      // Continue with the seeding process even if cleanup fails
+    }
     
     // Create each note from our mock data
     for (const note of mockBiologyNotes) {

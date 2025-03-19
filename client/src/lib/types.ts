@@ -3,6 +3,7 @@
  */
 
 import { DAYS_OF_WEEK, CLASS_TYPES } from './constants';
+import { JSONContent } from '@tiptap/react';
 
 // Type for days of the week
 export type Day = typeof DAYS_OF_WEEK[number];
@@ -27,13 +28,20 @@ export interface Class {
   meetings: ClassMeeting[];
 }
 
+// TipTap Editor Content type
+export interface EditorContent {
+  type: string;
+  content: JSONContent;
+  version?: number;
+}
+
 // Note type
 export interface Note {
   id: number;
   classId: number;
   classTitle: string;
   classDate: string; // ISO date string
-  content: string;
+  content: EditorContent | string; // Can be either the new JSON format or legacy string format
   createdAt: string; // ISO date string
   updatedAt: string; // ISO date string
 }
@@ -43,7 +51,7 @@ export interface CreateNoteData {
   classId: number;
   classTitle: string;
   classDate: string | Date; // ISO date string or Date object
-  content: string;
+  content: EditorContent | string; // Can be either the new JSON format or legacy string format
 }
 
 // Data for updating an existing note
@@ -52,7 +60,7 @@ export interface UpdateNoteData {
   classId: number;
   classTitle: string;
   classDate: string | Date; // ISO date string or Date object
-  content: string;
+  content: EditorContent | string; // Can be either the new JSON format or legacy string format
 }
 
 // Data for creating a new class
