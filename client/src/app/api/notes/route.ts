@@ -208,37 +208,33 @@ export async function PUT(request: NextRequest) {
       )
     }
 
-    // Normalize the content if needed
-    const normalizedContent = isEditorContent(content) ? content : normalizeContent(content)
-
     // Process date if provided
-    let parsedDate = existingNote.classDate
+    let processedDate = undefined
     if (classDate) {
-      parsedDate = typeof classDate === 'string' ? new Date(classDate) : classDate
+      const tmpDate = typeof classDate === 'string' ? new Date(classDate) : classDate
       
-      if (isNaN(parsedDate.getTime())) {
+      if (isNaN(tmpDate.getTime())) {
         return NextResponse.json(
           { error: 'Invalid class date format' },
           { status: 400 }
         )
       }
+      processedDate = tmpDate
     }
 
-    // Define update data with type that matches Prisma's expectations
-    // Use Record<string, any> to allow for dynamic property assignment
-    const updateData: Record<string, any> = {
-      content: JSON.parse(JSON.stringify(normalizedContent)),
-      updatedAt: new Date()
-    }
-    
-    // Add optional fields if they're provided
-    if (classId !== undefined) updateData.classId = classId
-    if (classTitle !== undefined) updateData.classTitle = classTitle
-    if (classDate !== undefined) updateData.classDate = parsedDate
-
+    // Update the note - pass only the fields we want to update directly to Prisma
     const updatedNote = await prisma.note.update({
       where: { id: noteId },
-      data: updateData
+      data: {
+        // Only include fields that are provided
+        ...(content && { content: JSON.parse(JSON.stringify(
+          isEditorContent(content) ? content : normalizeContent(content)
+        ))}),
+        ...(classId !== undefined && { classId }),
+        ...(classTitle !== undefined && { classTitle }),
+        ...(processedDate && { classDate: processedDate }),
+        updatedAt: new Date()
+      }
     })
 
     return NextResponse.json(updatedNote)
