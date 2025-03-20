@@ -6,7 +6,7 @@ import {
   CardDescription,
   CardContent,
 } from "@/components/ui/card";
-import { Clock, Edit, Trash2 } from "lucide-react";
+import { Clock, Edit, Trash2, BookOpenText } from "lucide-react";
 import { useClassContext } from "@/context/ClassContext";
 import {
   AlertDialog,
@@ -21,6 +21,7 @@ import {
 import { Class, ClassListProps } from "@/lib/types";
 import { useRouter } from "next/navigation";
 import { formatTime } from "@/lib/utils";
+import { toast } from "sonner";
 
 const ClassList: React.FC<ClassListProps> = ({ classes, editClass }) => {
   const router = useRouter();
@@ -28,6 +29,7 @@ const ClassList: React.FC<ClassListProps> = ({ classes, editClass }) => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [classToDelete, setClassToDelete] = useState<Class | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [isSeeding, setIsSeeding] = useState<number | null>(null);
 
   const handleDeleteClass = (classItem: Class, e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent navigation when clicking delete
@@ -38,6 +40,36 @@ const ClassList: React.FC<ClassListProps> = ({ classes, editClass }) => {
   const handleEditClass = (classItem: Class, e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent navigation when clicking edit
     editClass(classItem);
+  };
+
+  const handleSeedNotes = async (classItem: Class, e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent navigation when clicking seed
+
+    try {
+      setIsSeeding(classItem.id);
+
+      const response = await fetch(`/api/classes/${classItem.id}/seed`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to seed notes");
+      }
+
+      const result = await response.json();
+      toast.success(
+        `${result.notesCreated} sample notes created for ${classItem.title}!`
+      );
+    } catch (error) {
+      console.error("Error seeding notes:", error);
+      toast.error("Failed to seed sample notes. Please try again.");
+    } finally {
+      setIsSeeding(null);
+    }
   };
 
   const navigateToClass = (classId: number) => {
@@ -81,6 +113,14 @@ const ClassList: React.FC<ClassListProps> = ({ classes, editClass }) => {
                   {classItem.title}
                 </CardTitle>
                 <div className="flex space-x-2">
+                  <button
+                    onClick={(e) => handleSeedNotes(classItem, e)}
+                    className="text-zinc-400 cursor-pointer hover:text-green-500"
+                    disabled={isSeeding === classItem.id}
+                    title="Seed sample notes"
+                  >
+                    <BookOpenText className="h-4 w-4" />
+                  </button>
                   <button
                     onClick={(e) => handleEditClass(classItem, e)}
                     className="text-zinc-400 cursor-pointer hover:text-white"
