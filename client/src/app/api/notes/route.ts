@@ -85,6 +85,14 @@ export async function POST(request: Request) {
       ? new Date(classDate) 
       : classDate
 
+    // Make sure the date is valid
+    if (isNaN(parsedClassDate.getTime())) {
+      return NextResponse.json(
+        { error: 'Invalid class date format' },
+        { status: 400 }
+      )
+    }
+
     // Process the content - ensure it's in the proper JSON format for Tiptap
     const processedContent = typeof content === 'string' 
       ? normalizeContent(content)  // Convert legacy string content to JSON
@@ -96,7 +104,7 @@ export async function POST(request: Request) {
         classId,
         classTitle,
         classDate: parsedClassDate,
-        content: processedContent,
+        content: processedContent as any,
       },
     })
 
@@ -170,10 +178,32 @@ export async function PUT(request: NextRequest) {
       )
     }
 
-    // Ensure we have a valid content object
-    if (!content || (typeof content === 'object' && !content.type)) {
+    // Ensure ID is a number
+    const noteId = typeof id === 'string' ? parseInt(id) : id
+    
+    if (isNaN(noteId)) {
       return NextResponse.json(
-        { error: 'Invalid content format' },
+        { error: 'Invalid note ID format' },
+        { status: 400 }
+      )
+    }
+
+    // Check if the note exists
+    const existingNote = await prisma.note.findUnique({
+      where: { id: noteId }
+    })
+    
+    if (!existingNote) {
+      return NextResponse.json(
+        { error: 'Note not found' },
+        { status: 404 }
+      )
+    }
+
+    // Ensure we have a valid content object
+    if (!content) {
+      return NextResponse.json(
+        { error: 'Content is required' },
         { status: 400 }
       )
     }
@@ -181,15 +211,32 @@ export async function PUT(request: NextRequest) {
     // Normalize the content if needed
     const normalizedContent = isEditorContent(content) ? content : normalizeContent(content)
 
-    const updatedNote = await prisma.note.update({
-      where: { id },
-      data: {
-        content: normalizedContent,
-        classId,
-        classTitle,
-        classDate,
-        updatedAt: new Date()
+    // Process date if provided
+    let parsedDate = existingNote.classDate
+    if (classDate) {
+      parsedDate = typeof classDate === 'string' ? new Date(classDate) : classDate
+      
+      if (isNaN(parsedDate.getTime())) {
+        return NextResponse.json(
+          { error: 'Invalid class date format' },
+          { status: 400 }
+        )
       }
+    }
+
+    // Build update data - only include fields that are provided
+    const updateData: any = {
+      content: normalizedContent as any,
+      updatedAt: new Date()
+    }
+    
+    if (classId !== undefined) updateData.classId = classId
+    if (classTitle !== undefined) updateData.classTitle = classTitle
+    if (classDate !== undefined) updateData.classDate = parsedDate
+
+    const updatedNote = await prisma.note.update({
+      where: { id: noteId },
+      data: updateData
     })
 
     return NextResponse.json(updatedNote)
