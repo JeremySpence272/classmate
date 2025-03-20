@@ -1,8 +1,15 @@
 import { Extension, Editor, Range } from "@tiptap/core";
 import { Suggestion } from "@tiptap/suggestion";
-import React, { useState, useEffect, ReactNode, useRef } from "react";
+import React, {
+  useState,
+  useEffect,
+  ReactNode,
+  useRef,
+  forwardRef,
+  useImperativeHandle,
+} from "react";
 import { createRoot, Root } from "react-dom/client";
-import tippy from "tippy.js";
+import tippy, { Instance } from "tippy.js";
 import "tippy.js/dist/tippy.css";
 import {
   Heading1,
@@ -18,6 +25,7 @@ import {
   TableIcon as TableCreateIcon,
 } from "lucide-react";
 
+// Suggestion item interface
 export interface SuggestionItem {
   title: string;
   description: string;
@@ -25,6 +33,7 @@ export interface SuggestionItem {
   command: (props: { editor: Editor; range: Range }) => void;
 }
 
+// Suggestion props interface for the popup component
 export interface SuggestionProps {
   items: SuggestionItem[];
   command: (item: SuggestionItem | null) => void;
@@ -34,20 +43,30 @@ export interface SuggestionProps {
   event?: KeyboardEvent;
 }
 
+// Props for ReactRenderer
 export interface ReactRendererProps {
   props: SuggestionProps;
   editor: Editor;
 }
 
+// Define a type for the forwarded ref from SlashCommandsList
+export interface SlashCommandsListRef {
+  onKeyDown: (event: KeyboardEvent) => boolean;
+}
+
+// A helper class to render React components into a popup element
 export class ReactRenderer {
-  component: any;
+  component: React.ComponentType<SuggestionProps>;
   element: HTMLElement;
-  ref: any;
-  props: any;
+  ref: SlashCommandsListRef | null = null;
+  props: SuggestionProps;
   editor: Editor;
   root: Root;
 
-  constructor(component: any, { props, editor }: ReactRendererProps) {
+  constructor(
+    component: React.ComponentType<SuggestionProps>,
+    { props, editor }: ReactRendererProps
+  ) {
     this.component = component;
     this.element = document.createElement("div");
     this.props = props;
@@ -56,18 +75,23 @@ export class ReactRenderer {
     this.render();
   }
 
-  updateProps(props: any) {
+  updateProps(props: Partial<SuggestionProps>) {
     this.props = { ...this.props, ...props };
     this.render();
   }
 
   render() {
-    const Component = this.component;
+    // Cast Component as a ForwardRef component so we can pass the ref prop
+    const Component = this.component as React.ForwardRefExoticComponent<
+      SuggestionProps & React.RefAttributes<SlashCommandsListRef>
+    >;
     this.root.render(
       <Component
         {...this.props}
         editor={this.editor}
-        ref={(ref: any) => (this.ref = ref)}
+        ref={(ref: SlashCommandsListRef | null) => {
+          this.ref = ref;
+        }}
       />
     );
   }
@@ -77,89 +101,96 @@ export class ReactRenderer {
   }
 }
 
-// SlashCommandsList component – renders the suggestion list popup
-const SlashCommandsList = ({
-  items,
-  command,
-  editor,
-  range,
-}: SuggestionProps) => {
-  const [selectedIndex, setSelectedIndex] = useState(0);
-  const commandListRef = useRef<HTMLDivElement>(null);
-  const selectedItemRef = useRef<HTMLButtonElement>(null);
+// The slash commands list component rendered inside the popup
+const SlashCommandsList = forwardRef<SlashCommandsListRef, SuggestionProps>(
+  ({ items, command, editor, range }, ref) => {
+    const [selectedIndex, setSelectedIndex] = useState(0);
+    const commandListRef = useRef<HTMLDivElement>(null);
+    const selectedItemRef = useRef<HTMLButtonElement>(null);
 
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "ArrowDown") {
-        e.preventDefault();
-        setSelectedIndex((prev) => (prev + 1) % items.length);
-      } else if (e.key === "ArrowUp") {
-        e.preventDefault();
-        setSelectedIndex((prev) => (prev - 1 + items.length) % items.length);
-      } else if (e.key === "Enter" || e.key === "Tab") {
-        e.preventDefault();
-        const item = items[selectedIndex];
-        if (item) {
-          item.command({ editor, range });
+    // Expose an onKeyDown handler via ref that always returns false
+    useImperativeHandle(ref, () => ({
+      onKeyDown: () => false,
+    }));
+
+    useEffect(() => {
+      const handleKeyDown = (e: KeyboardEvent) => {
+        if (e.key === "ArrowDown") {
+          e.preventDefault();
+          setSelectedIndex((prev) => (prev + 1) % items.length);
+        } else if (e.key === "ArrowUp") {
+          e.preventDefault();
+          setSelectedIndex((prev) => (prev - 1 + items.length) % items.length);
+        } else if (e.key === "Enter" || e.key === "Tab") {
+          e.preventDefault();
+          const item = items[selectedIndex];
+          if (item) {
+            item.command({ editor, range });
+          }
+          command(null);
+        } else if (e.key === "Escape") {
+          e.preventDefault();
+          command(null);
         }
-        command(null);
-      } else if (e.key === "Escape") {
-        e.preventDefault();
-        command(null);
+      };
+
+      document.addEventListener("keydown", handleKeyDown);
+      return () => document.removeEventListener("keydown", handleKeyDown);
+    }, [selectedIndex, items, command, editor, range]);
+
+    useEffect(() => {
+      if (selectedItemRef.current && commandListRef.current) {
+        const itemElement = selectedItemRef.current;
+        const listElement = commandListRef.current;
+        const scrollTop = listElement.scrollTop;
+        const listHeight = listElement.offsetHeight;
+        const itemTop = itemElement.offsetTop - listElement.offsetTop;
+        const itemHeight = itemElement.offsetHeight;
+        if (itemTop < scrollTop) {
+          listElement.scrollTop = itemTop;
+        } else if (itemTop + itemHeight > scrollTop + listHeight) {
+          listElement.scrollTop = itemTop + itemHeight - listHeight;
+        }
       }
-    };
+    }, [selectedIndex]);
 
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [selectedIndex, items, command, editor, range]);
-
-  useEffect(() => {
-    if (selectedItemRef.current && commandListRef.current) {
-      const itemElement = selectedItemRef.current;
-      const listElement = commandListRef.current;
-      const scrollTop = listElement.scrollTop;
-      const listHeight = listElement.offsetHeight;
-      const itemTop = itemElement.offsetTop - listElement.offsetTop;
-      const itemHeight = itemElement.offsetHeight;
-      if (itemTop < scrollTop) {
-        listElement.scrollTop = itemTop;
-      } else if (itemTop + itemHeight > scrollTop + listHeight) {
-        listElement.scrollTop = itemTop + itemHeight - listHeight;
-      }
-    }
-  }, [selectedIndex]);
-
-  return (
-    <div
-      className="slash-commands-menu bg-zinc-800 border border-zinc-700 rounded-md overflow-hidden shadow-lg"
-      style={{ width: "260px" }}
-      ref={commandListRef}
-    >
-      <div className="py-1 max-h-80 overflow-y-auto">
-        {items.map((item, index) => (
-          <button
-            key={index}
-            ref={index === selectedIndex ? selectedItemRef : null}
-            className={`w-full flex items-center px-3 py-2 text-left ${
-              index === selectedIndex ? "bg-zinc-700" : "hover:bg-zinc-700"
-            }`}
-            onClick={() => {
-              item.command({ editor, range });
-              command(null);
-            }}
-          >
-            <div className="flex-shrink-0 mr-2 text-zinc-400">{item.icon}</div>
-            <div>
-              <div className="text-sm text-zinc-200">{item.title}</div>
-              <div className="text-xs text-zinc-400">{item.description}</div>
-            </div>
-          </button>
-        ))}
+    return (
+      <div
+        className="slash-commands-menu bg-zinc-800 border border-zinc-700 rounded-md overflow-hidden shadow-lg"
+        style={{ width: "260px" }}
+        ref={commandListRef}
+      >
+        <div className="py-1 max-h-80 overflow-y-auto">
+          {items.map((item, index) => (
+            <button
+              key={index}
+              ref={index === selectedIndex ? selectedItemRef : null}
+              className={`w-full flex items-center px-3 py-2 text-left ${
+                index === selectedIndex ? "bg-zinc-700" : "hover:bg-zinc-700"
+              }`}
+              onClick={() => {
+                item.command({ editor, range });
+                command(null);
+              }}
+            >
+              <div className="flex-shrink-0 mr-2 text-zinc-400">
+                {item.icon}
+              </div>
+              <div>
+                <div className="text-sm text-zinc-200">{item.title}</div>
+                <div className="text-xs text-zinc-400">{item.description}</div>
+              </div>
+            </button>
+          ))}
+        </div>
       </div>
-    </div>
-  );
-};
+    );
+  }
+);
 
+SlashCommandsList.displayName = "SlashCommandsList";
+
+// The list of suggestion items available in the slash command menu
 export const suggestionItems: SuggestionItem[] = [
   {
     title: "Heading 1",
@@ -262,6 +293,7 @@ export const suggestionItems: SuggestionItem[] = [
   },
 ];
 
+// The slash command suggestion configuration object
 export const slashCommandSuggestion = {
   items: ({ query }: { query: string }) => {
     if (query === "") {
@@ -273,7 +305,7 @@ export const slashCommandSuggestion = {
   },
   render: () => {
     let component: ReactRenderer;
-    let popup: any;
+    let popup: Instance;
     return {
       onStart: (props: SuggestionProps) => {
         component = new ReactRenderer(SlashCommandsList, {
@@ -288,7 +320,7 @@ export const slashCommandSuggestion = {
           interactive: true,
           trigger: "manual",
           placement: "bottom-start",
-        });
+        }) as Instance;
       },
       onUpdate: (props: SuggestionProps) => {
         component.updateProps(props);
@@ -297,11 +329,13 @@ export const slashCommandSuggestion = {
         });
       },
       onKeyDown: (props: SuggestionProps) => {
-        if (props.event?.key === "Escape") {
+        if (props.event && props.event.key === "Escape") {
           popup.hide();
           return true;
         }
-        return component.ref?.onKeyDown(props.event);
+        return props.event && component.ref && component.ref.onKeyDown
+          ? component.ref.onKeyDown(props.event)
+          : false;
       },
       onExit: () => {
         popup.destroy();
@@ -311,6 +345,7 @@ export const slashCommandSuggestion = {
   },
 };
 
+// Finally, create the SlashCommand extension
 export const SlashCommand = Extension.create({
   name: "slashCommand",
   addOptions() {
@@ -324,11 +359,11 @@ export const SlashCommand = Extension.create({
         }: {
           editor: Editor;
           range: Range;
-          props: any;
+          props: {
+            command: (payload: { editor: Editor; range: Range }) => void;
+          };
         }) => {
-          if (props && typeof props.command === "function") {
-            props.command({ editor, range });
-          }
+          props.command({ editor, range });
         },
       },
     };

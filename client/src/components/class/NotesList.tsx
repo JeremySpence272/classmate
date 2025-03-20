@@ -16,7 +16,6 @@ export default function ClassNotes({ classId }: ClassNotesProps) {
   const { fetchNotesByClass } = useNoteContext();
   const [classNotes, setClassNotes] = useState<Note[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [selectedNote, setSelectedNote] = useState<Note | null>(null);
 
   useEffect(() => {
     const loadNotes = async () => {
@@ -38,13 +37,6 @@ export default function ClassNotes({ classId }: ClassNotesProps) {
   const handleAddNote = () => {
     console.log("Add note for class:", classId);
     // This will be implemented to actually add a note
-  };
-
-  // Handle clicking on a note preview - we'll keep this for potential future use
-  // but the NotePreview will handle navigation itself
-  const handleNoteClick = (note: Note) => {
-    console.log("Selected note:", note);
-    setSelectedNote(note);
   };
 
   return (

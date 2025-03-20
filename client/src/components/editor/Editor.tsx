@@ -6,8 +6,8 @@ import StarterKit from "@tiptap/starter-kit";
 import { Placeholder } from "@tiptap/extension-placeholder";
 import React, { useState, useEffect } from "react";
 import { ColumnsExtension } from "@tiptap-extend/columns";
-import tippy from "tippy.js";
 import "tippy.js/dist/tippy.css";
+import { Editor, Range } from "@tiptap/core";
 
 // Table extensions
 import Table from "@tiptap/extension-table";
@@ -28,12 +28,13 @@ import Link from "@tiptap/extension-link";
 // Import editor styles
 import "@/app/_styles/editor.css";
 
-// Import your working BubbleMenu
+// Import the working BubbleMenu component
 import EditorBubbleMenu from "./EditorBubbleMenu";
 
-// Import the SlashCommand extension from our dedicated file
+// Import the custom SlashCommand extension
 import { SlashCommand } from "./SlashCommand";
 
+// Define props for the editor component
 interface EditorProps {
   initialContent?: string | JSONContent;
   darkMode?: boolean;
@@ -53,7 +54,7 @@ const TipTapEditor: React.FC<EditorProps> = ({
   >(defaultContent);
 
   useEffect(() => {
-    // Process initial content – using JSONContent object or string HTML
+    // Process initial content – either JSONContent or HTML string
     if (initialContent) {
       try {
         if (
@@ -77,7 +78,7 @@ const TipTapEditor: React.FC<EditorProps> = ({
     }
   }, [initialContent]);
 
-  // Define the TipTap extensions array – note the SlashCommand is added last
+  // TipTap extensions array – note the SlashCommand is included and typed properly
   const extensions = [
     Color.configure({ types: [TextStyle.name, ListItem.name] }),
     TextStyle,
@@ -99,7 +100,7 @@ const TipTapEditor: React.FC<EditorProps> = ({
     }),
     Image,
     Dropcursor,
-    // The SlashCommand extension will attach the slash-suggestion popup when you type "/"
+    // SlashCommand extension – note the command now uses a proper type
     SlashCommand.configure({
       suggestion: {
         char: "/",
@@ -108,13 +109,13 @@ const TipTapEditor: React.FC<EditorProps> = ({
           range,
           props,
         }: {
-          editor: any;
-          range: any;
-          props: any;
+          editor: Editor;
+          range: Range;
+          props: {
+            command: (payload: { editor: Editor; range: Range }) => void;
+          };
         }) => {
-          if (props && typeof props.command === "function") {
-            props.command({ editor, range });
-          }
+          props.command({ editor, range });
         },
       },
     }),
