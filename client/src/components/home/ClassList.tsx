@@ -23,6 +23,8 @@ import { useRouter } from "next/navigation";
 import { formatTime } from "@/lib/utils";
 import { toast } from "sonner";
 
+import { mockBiologyNotes } from "@/lib/mock-notes";
+
 const ClassList: React.FC<ClassListProps> = ({ classes, editClass }) => {
   const router = useRouter();
   const { deleteClass } = useClassContext();
@@ -47,22 +49,34 @@ const ClassList: React.FC<ClassListProps> = ({ classes, editClass }) => {
 
     try {
       setIsSeeding(classItem.id);
+      const createdNotes = [];
 
-      const response = await fetch(`/api/classes/${classItem.id}/seed`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
+      // Use the existing notes endpoint to create each note
+      for (const note of mockBiologyNotes) {
+        const noteData = {
+          ...note,
+          classId: classItem.id,
+        };
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to seed notes");
+        const response = await fetch("/api/notes", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(noteData),
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || "Failed to create note");
+        }
+
+        const result = await response.json();
+        createdNotes.push(result);
       }
 
-      const result = await response.json();
       toast.success(
-        `${result.notesCreated} sample notes created for ${classItem.title}!`
+        `${createdNotes.length} sample notes created for ${classItem.title}!`
       );
     } catch (error) {
       console.error("Error seeding notes:", error);
