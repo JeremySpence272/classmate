@@ -104,7 +104,7 @@ export async function POST(request: Request) {
         classId,
         classTitle,
         classDate: parsedClassDate,
-        content: processedContent as any,
+        content: JSON.parse(JSON.stringify(processedContent)),
       },
     })
 
@@ -226,7 +226,7 @@ export async function PUT(request: NextRequest) {
 
     // Build update data - only include fields that are provided
     const updateData: any = {
-      content: normalizedContent as any,
+      content: JSON.parse(JSON.stringify(normalizedContent)),
       updatedAt: new Date()
     }
     
