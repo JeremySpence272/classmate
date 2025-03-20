@@ -224,12 +224,14 @@ export async function PUT(request: NextRequest) {
       }
     }
 
-    // Build update data - only include fields that are provided
-    const updateData: any = {
+    // Define update data with type that matches Prisma's expectations
+    // Use Record<string, any> to allow for dynamic property assignment
+    const updateData: Record<string, any> = {
       content: JSON.parse(JSON.stringify(normalizedContent)),
       updatedAt: new Date()
     }
     
+    // Add optional fields if they're provided
     if (classId !== undefined) updateData.classId = classId
     if (classTitle !== undefined) updateData.classTitle = classTitle
     if (classDate !== undefined) updateData.classDate = parsedDate
