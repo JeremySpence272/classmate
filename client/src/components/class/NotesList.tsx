@@ -73,7 +73,7 @@ export default function ClassNotes({ classId }: ClassNotesProps) {
         ) : classNotes.length > 0 ? (
           <div className="space-y-2">
             {classNotes.map((note) => (
-              <NotePreview key={note.id} note={note} classId={classId} />
+              <NotePreview key={note.id} note={note} />
             ))}
           </div>
         ) : (

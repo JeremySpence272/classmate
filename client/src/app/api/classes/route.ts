@@ -189,7 +189,7 @@ export async function DELETE(request: NextRequest) {
       )
     }
 
-    const result = await prisma.class.delete({
+    await prisma.class.delete({
       where: { id },
     })
 

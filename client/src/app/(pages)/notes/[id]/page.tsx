@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Note, EditorContent } from "@/lib/types";
+import { Note } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Save } from "lucide-react";
 import { format } from "date-fns";
@@ -140,7 +140,7 @@ export default function NotePage() {
     try {
       // Get the editor instance using the TipTap editor's data attribute
       const editorElement = document.querySelector(".tiptap");
-      // @ts-ignore - TipTap adds the editor instance to the DOM element
+      // @ts-expect-error - TipTap adds the editor instance to the DOM element
       const editor = editorElement?.editor;
 
       if (!editor) {

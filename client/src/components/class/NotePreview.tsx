@@ -7,15 +7,10 @@ import { useRouter } from "next/navigation";
 
 interface NotePreviewProps {
   note: Note;
-  classId: number;
   onClick?: (note: Note) => void;
 }
 
-export default function NotePreview({
-  note,
-  classId,
-  onClick,
-}: NotePreviewProps) {
+export default function NotePreview({ note, onClick }: NotePreviewProps) {
   const router = useRouter();
 
   // Format the date to be more readable

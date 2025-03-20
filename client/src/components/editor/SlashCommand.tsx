@@ -1,7 +1,9 @@
 import { Extension, Editor, Range } from "@tiptap/core";
 import { Suggestion } from "@tiptap/suggestion";
-import React, { useState, useRef, useEffect, ReactNode } from "react";
+import React, { useState, useEffect, ReactNode, useRef } from "react";
 import { createRoot, Root } from "react-dom/client";
+import tippy from "tippy.js";
+import "tippy.js/dist/tippy.css";
 import {
   Heading1,
   Heading2,
@@ -16,18 +18,14 @@ import {
   TableIcon as TableCreateIcon,
 } from "lucide-react";
 
-// Initialize tippy as a variable that will be set in the component
-let tippyInstance: any = null;
-
-// Types
-interface SuggestionItem {
+export interface SuggestionItem {
   title: string;
   description: string;
   icon: ReactNode;
   command: (props: { editor: Editor; range: Range }) => void;
 }
 
-interface SuggestionProps {
+export interface SuggestionProps {
   items: SuggestionItem[];
   command: (item: SuggestionItem | null) => void;
   editor: Editor;
@@ -36,13 +34,12 @@ interface SuggestionProps {
   event?: KeyboardEvent;
 }
 
-interface ReactRendererProps {
+export interface ReactRendererProps {
   props: SuggestionProps;
   editor: Editor;
 }
 
-// Helper class for rendering React components in popup
-class ReactRenderer {
+export class ReactRenderer {
   component: any;
   element: HTMLElement;
   ref: any;
@@ -60,10 +57,7 @@ class ReactRenderer {
   }
 
   updateProps(props: any) {
-    this.props = {
-      ...this.props,
-      ...props,
-    };
+    this.props = { ...this.props, ...props };
     this.render();
   }
 
@@ -83,7 +77,7 @@ class ReactRenderer {
   }
 }
 
-// Create the slash command menu component
+// SlashCommandsList component – renders the suggestion list popup
 const SlashCommandsList = ({
   items,
   command,
@@ -98,42 +92,35 @@ const SlashCommandsList = ({
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "ArrowDown") {
         e.preventDefault();
-        setSelectedIndex((selectedIndex + 1) % items.length);
-      }
-
-      if (e.key === "ArrowUp") {
+        setSelectedIndex((prev) => (prev + 1) % items.length);
+      } else if (e.key === "ArrowUp") {
         e.preventDefault();
-        setSelectedIndex((selectedIndex - 1 + items.length) % items.length);
-      }
-
-      if (e.key === "Enter" || e.key === "Tab") {
+        setSelectedIndex((prev) => (prev - 1 + items.length) % items.length);
+      } else if (e.key === "Enter" || e.key === "Tab") {
         e.preventDefault();
-        selectItem(selectedIndex);
-      }
-
-      if (e.key === "Escape") {
+        const item = items[selectedIndex];
+        if (item) {
+          item.command({ editor, range });
+        }
+        command(null);
+      } else if (e.key === "Escape") {
         e.preventDefault();
         command(null);
       }
     };
 
     document.addEventListener("keydown", handleKeyDown);
-
-    return () => {
-      document.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [selectedIndex, items, command]);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [selectedIndex, items, command, editor, range]);
 
   useEffect(() => {
     if (selectedItemRef.current && commandListRef.current) {
       const itemElement = selectedItemRef.current;
       const listElement = commandListRef.current;
-
       const scrollTop = listElement.scrollTop;
       const listHeight = listElement.offsetHeight;
       const itemTop = itemElement.offsetTop - listElement.offsetTop;
       const itemHeight = itemElement.offsetHeight;
-
       if (itemTop < scrollTop) {
         listElement.scrollTop = itemTop;
       } else if (itemTop + itemHeight > scrollTop + listHeight) {
@@ -141,20 +128,6 @@ const SlashCommandsList = ({
       }
     }
   }, [selectedIndex]);
-
-  const selectItem = (index: number) => {
-    const item = items[index];
-
-    if (item) {
-      if (item.command && editor && range) {
-        item.command({ editor, range });
-      }
-
-      if (command) {
-        command(null);
-      }
-    }
-  };
 
   return (
     <div
@@ -170,7 +143,10 @@ const SlashCommandsList = ({
             className={`w-full flex items-center px-3 py-2 text-left ${
               index === selectedIndex ? "bg-zinc-700" : "hover:bg-zinc-700"
             }`}
-            onClick={() => selectItem(index)}
+            onClick={() => {
+              item.command({ editor, range });
+              command(null);
+            }}
           >
             <div className="flex-shrink-0 mr-2 text-zinc-400">{item.icon}</div>
             <div>
@@ -184,14 +160,13 @@ const SlashCommandsList = ({
   );
 };
 
-// Suggestion items
 export const suggestionItems: SuggestionItem[] = [
   {
     title: "Heading 1",
     description: "Large section heading",
     icon: <Heading1 size={18} />,
     command: ({ editor, range }) => {
-      editor.chain().focus().deleteRange(range).setHeading({ level: 1 }).run();
+      editor.chain().deleteRange(range).setHeading({ level: 1 }).run();
     },
   },
   {
@@ -199,7 +174,7 @@ export const suggestionItems: SuggestionItem[] = [
     description: "Medium section heading",
     icon: <Heading2 size={18} />,
     command: ({ editor, range }) => {
-      editor.chain().focus().deleteRange(range).setHeading({ level: 2 }).run();
+      editor.chain().deleteRange(range).setHeading({ level: 2 }).run();
     },
   },
   {
@@ -207,7 +182,7 @@ export const suggestionItems: SuggestionItem[] = [
     description: "Small section heading",
     icon: <Heading3 size={18} />,
     command: ({ editor, range }) => {
-      editor.chain().focus().deleteRange(range).setHeading({ level: 3 }).run();
+      editor.chain().deleteRange(range).setHeading({ level: 3 }).run();
     },
   },
   {
@@ -215,7 +190,7 @@ export const suggestionItems: SuggestionItem[] = [
     description: "Create a simple bullet list",
     icon: <List size={18} />,
     command: ({ editor, range }) => {
-      editor.chain().focus().deleteRange(range).toggleBulletList().run();
+      editor.chain().deleteRange(range).toggleBulletList().run();
     },
   },
   {
@@ -223,7 +198,7 @@ export const suggestionItems: SuggestionItem[] = [
     description: "Create a numbered list",
     icon: <ListOrdered size={18} />,
     command: ({ editor, range }) => {
-      editor.chain().focus().deleteRange(range).toggleOrderedList().run();
+      editor.chain().deleteRange(range).toggleOrderedList().run();
     },
   },
   {
@@ -231,7 +206,7 @@ export const suggestionItems: SuggestionItem[] = [
     description: "Add a horizontal divider",
     icon: <Minus size={18} />,
     command: ({ editor, range }) => {
-      editor.chain().focus().deleteRange(range).setHorizontalRule().run();
+      editor.chain().deleteRange(range).setHorizontalRule().run();
     },
   },
   {
@@ -239,7 +214,7 @@ export const suggestionItems: SuggestionItem[] = [
     description: "Add a quote block",
     icon: <Quote size={18} />,
     command: ({ editor, range }) => {
-      editor.chain().focus().deleteRange(range).toggleBlockquote().run();
+      editor.chain().deleteRange(range).toggleBlockquote().run();
     },
   },
   {
@@ -247,7 +222,7 @@ export const suggestionItems: SuggestionItem[] = [
     description: "Add a code block",
     icon: <Terminal size={18} />,
     command: ({ editor, range }) => {
-      editor.chain().focus().deleteRange(range).toggleCodeBlock().run();
+      editor.chain().deleteRange(range).toggleCodeBlock().run();
     },
   },
   {
@@ -257,7 +232,6 @@ export const suggestionItems: SuggestionItem[] = [
     command: ({ editor, range }) => {
       editor
         .chain()
-        .focus()
         .deleteRange(range)
         .insertTable({ rows: 3, cols: 3, withHeaderRow: true })
         .run();
@@ -269,9 +243,8 @@ export const suggestionItems: SuggestionItem[] = [
     icon: <ImagePlus size={18} />,
     command: ({ editor, range }) => {
       const url = window.prompt("Enter image URL");
-
       if (url) {
-        editor.chain().focus().deleteRange(range).setImage({ src: url }).run();
+        editor.chain().deleteRange(range).setImage({ src: url }).run();
       }
     },
   },
@@ -282,38 +255,32 @@ export const suggestionItems: SuggestionItem[] = [
     command: ({ editor, range }) => {
       const count = window.prompt("How many columns? (2-4)", "2");
       const columnCount = parseInt(count || "2", 10);
-
       if (columnCount >= 2 && columnCount <= 4) {
-        editor.chain().focus().deleteRange(range).setColumns(columnCount).run();
+        editor.chain().deleteRange(range).setColumns(columnCount).run();
       }
     },
   },
 ];
 
-// Slash command suggestion configuration
 export const slashCommandSuggestion = {
   items: ({ query }: { query: string }) => {
     if (query === "") {
       return suggestionItems;
     }
-
     return suggestionItems.filter((item) =>
       item.title.toLowerCase().includes(query.toLowerCase())
     );
   },
-
   render: () => {
     let component: ReactRenderer;
     let popup: any;
-
     return {
       onStart: (props: SuggestionProps) => {
         component = new ReactRenderer(SlashCommandsList, {
           props,
           editor: props.editor,
         });
-
-        popup = tippyInstance("body", {
+        popup = tippy(document.body, {
           getReferenceClientRect: props.clientRect,
           appendTo: () => document.body,
           content: component.element,
@@ -321,26 +288,21 @@ export const slashCommandSuggestion = {
           interactive: true,
           trigger: "manual",
           placement: "bottom-start",
-        })[0];
+        });
       },
-
       onUpdate: (props: SuggestionProps) => {
         component.updateProps(props);
-
         popup.setProps({
           getReferenceClientRect: props.clientRect,
         });
       },
-
       onKeyDown: (props: SuggestionProps) => {
         if (props.event?.key === "Escape") {
           popup.hide();
           return true;
         }
-
         return component.ref?.onKeyDown(props.event);
       },
-
       onExit: () => {
         popup.destroy();
         component.destroy();
@@ -349,10 +311,8 @@ export const slashCommandSuggestion = {
   },
 };
 
-// Create the SlashCommand extension
 export const SlashCommand = Extension.create({
   name: "slashCommand",
-
   addOptions() {
     return {
       suggestion: {
@@ -373,22 +333,14 @@ export const SlashCommand = Extension.create({
       },
     };
   },
-
   addProseMirrorPlugins() {
     return [
       Suggestion({
         editor: this.editor,
         ...this.options.suggestion,
+        items: slashCommandSuggestion.items,
+        render: slashCommandSuggestion.render,
       }),
     ];
   },
 });
-
-// Initialize tippy
-export const initializeTippy = () => {
-  if (!tippyInstance) {
-    import("tippy.js").then((tippyModule) => {
-      tippyInstance = tippyModule.default;
-    });
-  }
-};

@@ -6,13 +6,6 @@ import { useClassContext } from "@/context/ClassContext";
 import { Class } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Edit, Trash2 } from "lucide-react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { formatTime } from "@/lib/utils";
 import GlobalNav from "@/components/globals/GlobalNav";
 import ClassNotes from "@/components/class/NotesList";
