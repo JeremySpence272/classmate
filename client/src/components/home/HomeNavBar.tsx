@@ -1,10 +1,10 @@
 import React, { memo, useCallback } from "react";
-import { Button } from "./ui/button";
+import { Button } from "../ui/button";
 import { Plus, X, Check } from "lucide-react";
 import ViewToggle from "./ViewToggle";
 import { useClassContext } from "@/context/ClassContext";
 
-interface TitleComponentProps {
+interface HomeNavBarProps {
   onAddClass: () => void;
   isAddingClass: boolean;
   formState?: {
@@ -18,7 +18,7 @@ interface TitleComponentProps {
 }
 
 // Memoize the component to prevent unnecessary re-renders
-const TitleComponent = memo(
+const HomeNavBar = memo(
   ({
     onAddClass,
     isAddingClass,
@@ -26,7 +26,7 @@ const TitleComponent = memo(
     viewMode,
     setViewMode,
     isEditing,
-  }: TitleComponentProps) => {
+  }: HomeNavBarProps) => {
     const { cancelClassForm } = useClassContext();
 
     // Create stable references to the form state properties
@@ -101,6 +101,6 @@ const TitleComponent = memo(
   }
 );
 
-TitleComponent.displayName = "TitleComponent";
+HomeNavBar.displayName = "HomeNavBar";
 
-export default TitleComponent;
+export default HomeNavBar;

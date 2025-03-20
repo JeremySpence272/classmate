@@ -14,9 +14,9 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { formatTime } from "@/lib/utils";
-import GlobalNav from "@/components/GlobalNav";
-import ClassNotes from "@/components/class/Notes";
-import ClassTodos from "@/components/class/Todos";
+import GlobalNav from "@/components/globals/GlobalNav";
+import ClassNotes from "@/components/class/NotesList";
+import ClassTodos from "@/components/class/TodosList";
 
 export default function ClassPage() {
   const params = useParams();

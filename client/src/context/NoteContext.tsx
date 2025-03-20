@@ -89,6 +89,33 @@ export const NoteProvider: React.FC<{ children: ReactNode }> = ({
     }
   }, []);
 
+  // Update an existing note
+  const updateNote = useCallback(async (noteData: UpdateNoteData) => {
+    try {
+      const response = await fetch(API_ENDPOINTS.NOTES, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(noteData),
+      });
+
+      const updatedNote = await handleApiResponse<Note>(response);
+      setNotes((prevNotes) =>
+        prevNotes.map((note) =>
+          note.id === updatedNote.id ? updatedNote : note
+        )
+      );
+      toast.success("Note saved successfully");
+      return updatedNote;
+    } catch (err) {
+      const errorMessage = formatApiError(err);
+      console.error("Error updating note:", err);
+      toast.error(errorMessage || "Failed to save note");
+      throw err;
+    }
+  }, []);
+
   // The context value
   const contextValue = {
     notes,
@@ -97,6 +124,7 @@ export const NoteProvider: React.FC<{ children: ReactNode }> = ({
     fetchNotes,
     fetchNotesByClass,
     createNote,
+    updateNote,
   };
 
   return (

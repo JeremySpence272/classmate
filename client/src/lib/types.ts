@@ -137,4 +137,5 @@ export interface NoteContextType {
   fetchNotes: () => Promise<void>;
   fetchNotesByClass: (classId: number) => Promise<Note[]>;
   createNote: (noteData: CreateNoteData) => Promise<Note>;
+  updateNote: (noteData: UpdateNoteData) => Promise<Note>;
 } 

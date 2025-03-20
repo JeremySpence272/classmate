@@ -25,8 +25,8 @@ export default function NotePreview({
     if (onClick) {
       onClick(note);
     } else {
-      // Navigate to the note detail page
-      router.push(`/classes/${classId}/notes/${note.id}`);
+      // Navigate to the note detail page with the flatter structure
+      router.push(`/notes/${note.id}`);
     }
   };
 

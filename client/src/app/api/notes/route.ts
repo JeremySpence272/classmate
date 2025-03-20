@@ -156,4 +156,48 @@ export async function DELETE(request: NextRequest) {
       { status: 500 }
     )
   }
+}
+
+export async function PUT(request: NextRequest) {
+  try {
+    const data = await request.json()
+    const { id, content, classId, classTitle, classDate } = data
+
+    if (!id) {
+      return NextResponse.json(
+        { error: 'Note ID is required' },
+        { status: 400 }
+      )
+    }
+
+    // Ensure we have a valid content object
+    if (!content || (typeof content === 'object' && !content.type)) {
+      return NextResponse.json(
+        { error: 'Invalid content format' },
+        { status: 400 }
+      )
+    }
+
+    // Normalize the content if needed
+    const normalizedContent = isEditorContent(content) ? content : normalizeContent(content)
+
+    const updatedNote = await prisma.note.update({
+      where: { id },
+      data: {
+        content: normalizedContent,
+        classId,
+        classTitle,
+        classDate,
+        updatedAt: new Date()
+      }
+    })
+
+    return NextResponse.json(updatedNote)
+  } catch (error) {
+    console.error('Error updating note:', error)
+    return NextResponse.json(
+      { error: 'Error updating note' },
+      { status: 500 }
+    )
+  }
 } 

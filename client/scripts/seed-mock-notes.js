@@ -6,7 +6,7 @@ const API_URL = 'http://localhost:3000/api/notes';
 // Mock data for a biology class
 const mockBiologyNotes = [
     {
-      classTitle: "Biology 101 – Unit I: Cellular Life",
+      classTitle: "Unit I: Cellular Life",
       classDate: "2024-06-19T11:30:00Z",
       content: {
         type: "doc",
@@ -310,7 +310,7 @@ const mockBiologyNotes = [
       }
     },
     {
-      classTitle: "Biology 101 – Unit II: Genetics",
+      classTitle: "Unit II: Genetics",
       classDate: "2024-06-26T11:30:00Z",
       content: {
         type: "doc",
@@ -494,7 +494,7 @@ const mockBiologyNotes = [
       }
     },
     {
-      classTitle: "Biology 101 – Unit III: Evolution",
+      classTitle: "Unit III: Evolution",
       classDate: "2024-07-03T11:30:00Z",
       content: {
         type: "doc",
@@ -701,7 +701,7 @@ const mockBiologyNotes = [
       }
     },
     {
-      classTitle: "Biology 101 – Unit IV: Evolution and Biodiversity",
+      classTitle: "Unit IV: Evolution and Biodiversity",
       classDate: "2024-07-10T11:30:00Z",
       content: {
         type: "doc",
@@ -920,7 +920,7 @@ const mockBiologyNotes = [
       }
     },
     {
-      classTitle: "Biology 101 – Unit V: Plant Structure and Function",
+      classTitle: "Unit V: Plant Structure and Function",
       classDate: "2024-07-17T11:30:00Z",
       content: {
         type: "doc",
@@ -1112,7 +1112,7 @@ const mockBiologyNotes = [
       }
     },
     {
-      classTitle: "Biology 101 – Unit VI: Animal Structure and Function",
+      classTitle: "Unit VI: Animal Structure and Function",
       classDate: "2024-07-18T11:30:00Z",
       content: {
         type: "doc",

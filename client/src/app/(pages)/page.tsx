@@ -1,14 +1,14 @@
 "use client";
-import ClassForm from "@/components/ClassForm";
-import TitleComponent from "@/components/TitleComponent";
-import ClassList from "@/components/ClassList";
-import ClassCalendar from "@/components/ClassCalendar";
+import ClassForm from "@/components/home/ClassForm";
+import HomeNavBar from "@/components/home/HomeNavBar";
+import ClassList from "@/components/home/ClassList";
+import ClassCalendar from "@/components/home/ClassCalendar";
 import { useState, useEffect, useCallback } from "react";
 import { useClassContext } from "@/context/ClassContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { Calendar, PlusCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import GlobalNav from "@/components/GlobalNav";
+import GlobalNav from "@/components/globals/GlobalNav";
 
 export default function Home() {
   const [viewMode, setViewMode] = useState<"list" | "calendar">("list");
@@ -138,7 +138,7 @@ export default function Home() {
   return (
     <>
       <GlobalNav>
-        <TitleComponent
+        <HomeNavBar
           onAddClass={startAddingClass}
           isAddingClass={isAddingClass || isEditing}
           formState={isAddingClass || isEditing ? formState : undefined}

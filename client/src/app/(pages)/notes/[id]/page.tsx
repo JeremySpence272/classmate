@@ -4,22 +4,26 @@ import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Note, EditorContent } from "@/lib/types";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Save } from "lucide-react";
 import { format } from "date-fns";
-import GlobalNav from "@/components/GlobalNav";
+import GlobalNav from "@/components/globals/GlobalNav";
 import { API_ENDPOINTS } from "@/lib/constants";
 import { handleApiResponse } from "@/lib/api-middleware";
 import TipTapEditor from "@/components/editor/Editor";
 import { normalizeContent } from "@/lib/editor-utils";
 import { JSONContent } from "@tiptap/react";
+import { useNoteContext } from "@/context/NoteContext";
 
 export default function NotePage() {
   const params = useParams();
   const router = useRouter();
+  const { updateNote } = useNoteContext();
   const [note, setNote] = useState<Note | null>(null);
   const [editorContent, setEditorContent] = useState<JSONContent | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [hasChanges, setHasChanges] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     const loadNote = async () => {
@@ -27,8 +31,7 @@ export default function NotePage() {
 
       try {
         // Get the note ID from the URL parameters
-        const noteId = parseInt(params.noteId as string, 10);
-        const classId = parseInt(params.id as string, 10);
+        const noteId = parseInt(params.id as string, 10);
 
         // Fetch the note using the API endpoint
         const response = await fetch(API_ENDPOINTS.NOTE(noteId));
@@ -90,15 +93,86 @@ export default function NotePage() {
     };
 
     loadNote();
-  }, [params.noteId, params.id]);
+  }, [params.id]);
 
   const handleBack = () => {
-    router.push(`/classes/${params.id}`);
+    if (hasChanges) {
+      if (
+        window.confirm(
+          "You have unsaved changes. Are you sure you want to leave?"
+        )
+      ) {
+        // Navigate back to the class page
+        if (note) {
+          router.push(`/classes/${note.classId}`);
+        } else {
+          router.push("/");
+        }
+      }
+    } else {
+      // Navigate back to the class page
+      if (note) {
+        router.push(`/classes/${note.classId}`);
+      } else {
+        router.push("/");
+      }
+    }
   };
 
   const handleEditorChange = (html: string) => {
-    // Just log the content change for now, we'll implement saving later
-    console.log("Editor content changed:", html);
+    if (note) {
+      // Create the new content object
+      const newContent = normalizeContent(html);
+
+      // Only set hasChanges if the content is actually different
+      if (editorContent) {
+        const currentContent = JSON.stringify(editorContent);
+        const newContentStr = JSON.stringify(newContent);
+        setHasChanges(currentContent !== newContentStr);
+      }
+    }
+  };
+
+  const handleSave = async () => {
+    if (!note) return;
+
+    setIsSaving(true);
+    try {
+      // Get the editor instance using the TipTap editor's data attribute
+      const editorElement = document.querySelector(".tiptap");
+      // @ts-ignore - TipTap adds the editor instance to the DOM element
+      const editor = editorElement?.editor;
+
+      if (!editor) {
+        throw new Error("Editor not found");
+      }
+
+      // Get the JSON content directly from the editor
+      const editorJson = editor.getJSON();
+
+      // Format the content according to our EditorContent interface
+      const formattedContent = {
+        type: "doc",
+        content: editorJson.content,
+        version: 1,
+      };
+
+      const updatedNote = await updateNote({
+        id: note.id,
+        classId: note.classId,
+        classTitle: note.classTitle,
+        classDate: note.classDate,
+        content: formattedContent,
+      });
+
+      // Update the note state but don't modify the editor content directly
+      setNote(updatedNote);
+      setHasChanges(false);
+    } catch (err) {
+      console.error("Error saving note:", err);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   // Render loading state
@@ -145,25 +219,34 @@ export default function NotePage() {
     "MMM d, yyyy h:mm a"
   );
 
-  // Add debugging log to see the editorContent structure
-  console.log("Editor content type:", typeof editorContent);
-  console.log("Editor content:", editorContent);
-
   return (
     <>
       <GlobalNav>
-        <Button
-          onClick={handleBack}
-          variant="outline"
-          className="bg-primary hover:bg-zinc-800 hover:text-white text-white border-zinc-800"
-        >
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Class
-        </Button>
+        <div className="flex items-center gap-4">
+          <Button
+            onClick={handleBack}
+            variant="outline"
+            className="bg-primary hover:bg-zinc-800 hover:text-white text-white border-zinc-800"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Class
+          </Button>
+          {hasChanges && (
+            <Button
+              onClick={handleSave}
+              variant="outline"
+              className="bg-emerald-500/10 text-emerald-300 border-emerald-500/50 hover:text-emerald-300 hover:bg-emerald-500/20"
+              disabled={isSaving}
+            >
+              <Save className="h-4 w-4 mr-2" />
+              {isSaving ? "Saving..." : "Save Changes"}
+            </Button>
+          )}
+        </div>
       </GlobalNav>
 
-      <div className="container w-2/3 mx-auto py-6">
-        <div className="flex justify-between items-center mb-6">
+      <div className="container w-2/3 mx-auto pt-6 pb-4">
+        <div className="flex justify-between items-center">
           <div className="flex flex-col">
             <h1 className="text-3xl font-bold text-white">{note.classTitle}</h1>
             <h3 className="text-md mt-2 font-medium text-zinc-400">
@@ -171,35 +254,37 @@ export default function NotePage() {
             </h3>
           </div>
         </div>
-
-        <div className="mb-4 p-3 bg-zinc-800/50 rounded-lg border border-zinc-700/50 text-sm text-zinc-300">
-          <div className="flex items-center gap-4">
-            <div className="w-[3%] flex justify-center">
-              <span className="text-xl">💡</span>
-            </div>
-            <div className="w-[97%]">
-              <p>
-                Use the bubble menu (appears when selecting text) for quick
-                formatting. Try the slash command (type{" "}
-                <code className="px-1.5 py-0.5 bg-zinc-700/50 rounded text-xs">
-                  /
-                </code>
-                ) for advanced features like tables and images.
-              </p>
+      </div>
+      <div className="bg-zinc-800/50 w-full">
+        <div className="container w-2/3 mx-auto pt-4 pb-6">
+          <div className="mb-4 p-3 bg-zinc-950 rounded-lg  text-sm text-zinc-300">
+            <div className="flex items-center gap-4">
+              <div className="w-[3%] flex justify-center">
+                <span className="text-xl">💡</span>
+              </div>
+              <div className="w-[97%]">
+                <p>
+                  Use the bubble menu (appears when selecting text) for quick
+                  formatting. Try the slash command (type{" "}
+                  <code className="px-1.5 py-0.5 bg-zinc-700/50 rounded text-xs">
+                    /
+                  </code>
+                  ) for advanced features like tables and images.
+                </p>
+              </div>
             </div>
           </div>
-        </div>
+          {/* Use your existing TipTap editor */}
+          <TipTapEditor
+            initialContent={editorContent}
+            darkMode={true}
+            onChange={handleEditorChange}
+          />
 
-        {/* Use your existing TipTap editor */}
-        <TipTapEditor
-          initialContent={editorContent}
-          darkMode={true}
-          onChange={handleEditorChange}
-        />
-
-        <div className="mt-4 text-xs text-zinc-500">
-          <p>Created: {formattedCreatedDate}</p>
-          <p>Last updated: {formattedUpdatedDate}</p>
+          <div className="mt-4 text-xs text-zinc-500">
+            <p>Created: {formattedCreatedDate}</p>
+            <p>Last updated: {formattedUpdatedDate}</p>
+          </div>
         </div>
       </div>
     </>

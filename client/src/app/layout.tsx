@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import "./globals.css";
+import "./_styles/globals.css";
 import { Toaster } from "sonner";
 import { ClassProvider } from "@/context/ClassContext";
 import { NoteProvider } from "@/context/NoteContext";
